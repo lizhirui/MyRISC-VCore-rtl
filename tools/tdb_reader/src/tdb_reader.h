@@ -65,7 +65,7 @@ namespace trace
             void check_row_index(uint64_t index);
             void check_name_exist(domain_t domain, std::string name);
             void check_name_nonexist(domain_t domain, std::string name);
-            void check_index(uint64_t index, uint64_t count);
+            void check_index(std::string name, uint64_t index, uint64_t count);
 
         public:
             trace_reader();

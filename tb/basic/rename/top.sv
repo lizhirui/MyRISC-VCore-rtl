@@ -79,7 +79,7 @@ module top;
         rat_rename_map_table_visible = 'b0;
 
         for(i = 0;i < `RENAME_WIDTH;i++) begin
-            for(j = 0;j < 2;j++) begin
+            for(j = 0;j < 3;j++) begin
                 rat_rename_read_phy_id[i][j] = 'b0;
             end
 

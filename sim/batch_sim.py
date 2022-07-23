@@ -99,12 +99,12 @@ class dynamic_check_thread(threading.Thread):
                 print_lock.release()
             elif "Offending" in ret:
                 print_lock.acquire()
-                red_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Test Failed" + elapsed_time)
+                red_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Test Failed " + elapsed_time)
                 failed_cnt += 1
                 print_lock.release()
             else:
                 print_lock.acquire()
-                yellow_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Unknown Error" + elapsed_time)
+                yellow_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Unknown Error " + elapsed_time)
                 print(ret)
                 exit(0)
                 unknown_error_cnt += 1

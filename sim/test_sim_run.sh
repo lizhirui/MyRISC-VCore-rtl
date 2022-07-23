@@ -14,13 +14,14 @@ endif
 
 cd ../tb/$1/$module/
 set nc_def = ""
+#set plusargs = "-noIncrComp"
 set plusargs = +NULL
 set flist = "./flist.f" ;
 set fsdb_opts = '';
 set notiming = "+notimingcheck";
 set coverage_opts = ''; 
 set assert_opts = '';
-set optconfig='-debug_all -j16'
+set optconfig='-debug_all -j'
 
 set OS=`uname -s`
 

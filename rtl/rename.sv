@@ -103,7 +103,7 @@ module rename(
         assign new_phy_id_channel_index[0] = 'b0;
 
         for(i = 1;i < `RENAME_WIDTH;i = i + 1) begin
-             assign new_phy_id_channel_index[i] = new_phy_id_need[i - 1] ? (new_phy_id_channel_index[i - 1] + 'b1) : new_phy_id_channel_index[i];
+             assign new_phy_id_channel_index[i] = new_phy_id_need[i - 1] ? (new_phy_id_channel_index[i - 1] + 'b1) : new_phy_id_channel_index[i - 1];
         end
     endgenerate
 

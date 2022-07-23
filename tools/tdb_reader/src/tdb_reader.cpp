@@ -84,11 +84,11 @@ namespace trace
         }
     }
 
-    void trace_reader::check_index(uint64_t index, uint64_t count)
+    void trace_reader::check_index(std::string name, uint64_t index, uint64_t count)
     {
         if(index >= count)
         {
-            std::cout << "Index " << index << " is out of range [0, " << count << ")!" << std::endl;
+            std::cout << "Field " << name << ": Index " << index << " is out of range [0, " << count << ")!" << std::endl;
             assert(false);
         }
     }
@@ -238,7 +238,7 @@ namespace trace
         check_name_exist(domain, name);
         uint32_t fieldid = get_map(domain)[name];
         auto const &item = get_list(domain)[fieldid];
-        check_index(index, item.element_num);
+        check_index(name, index, item.element_num);
         return (void *)(((char *)row_buffer) + item.offset + (index * item.element_size));
     }
 
