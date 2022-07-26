@@ -26,11 +26,11 @@ module commit(
         output logic[`PHY_REG_NUM - 1:0] commit_rat_map_table_visible,
         output logic commit_rat_map_table_restore,
         
-        output logic[`PHY_REG_NUM - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1],
+        output logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1],
         output logic[`COMMIT_WIDTH - 1:0] commit_rat_release_phy_id_valid,
         output logic commit_rat_release_map,
         
-        output logic[`PHY_REG_NUM - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1],
+        output logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1],
         output logic[`COMMIT_WIDTH - 1:0] commit_rat_commit_phy_id_valid,
         output logic commit_rat_commit_map,
         
@@ -294,7 +294,7 @@ module commit(
     assign commit_rat_commit_map = (cur_state == STATE_NORMAL) && (next_state != STATE_INTERRUPT_FLUSH);
     assign commit_rat_map_table_valid = cpbuf_commit_data[retire_has_bru_op_index].rat_phy_map_table_visible;
     assign commit_rat_map_table_visible = commit_rat_map_table_valid;
-    assign commit_rat_map_table_restore = (cur_state == STATE_NORMAL) && (next_state != STATE_INTERRUPT_FLUSH) && retire_is_predicted && !rob_commit_retire_data[retire_has_bru_op_index].has_exception;
+    assign commit_rat_map_table_restore = (cur_state == STATE_NORMAL) && (next_state != STATE_INTERRUPT_FLUSH) && retire_is_predicted && retire_is_miss && !rob_commit_retire_data[retire_has_bru_op_index].has_exception;
     assign commit_phyf_data_valid = commit_rat_map_table_valid;
     assign commit_phyf_data_valid_restore = commit_rat_map_table_restore;
 

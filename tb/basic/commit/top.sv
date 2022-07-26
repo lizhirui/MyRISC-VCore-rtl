@@ -26,11 +26,11 @@ module top;
     logic[`PHY_REG_NUM - 1:0] commit_rat_map_table_visible;
     logic commit_rat_map_table_restore;
     
-    logic[`PHY_REG_NUM - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1];
+    logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1];
     logic[`COMMIT_WIDTH - 1:0] commit_rat_release_phy_id_valid;
     logic commit_rat_release_map;
     
-    logic[`PHY_REG_NUM - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1];
+    logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1];
     logic[`COMMIT_WIDTH - 1:0] commit_rat_commit_phy_id_valid;
     logic commit_rat_commit_map;
     
