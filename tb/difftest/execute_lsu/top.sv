@@ -284,9 +284,11 @@ module top;
         $finish;
     end
 
-    initial begin
-        $fsdbDumpfile("top.fsdb");
-        $fsdbDumpvars(0, 0, "+all");
-        $fsdbDumpMDA();
-    end
+    `ifdef FSDB_DUMP
+        initial begin
+            $fsdbDumpfile("top.fsdb");
+            $fsdbDumpvars(0, 0, "+all");
+            $fsdbDumpMDA();
+        end
+    `endif
 endmodule

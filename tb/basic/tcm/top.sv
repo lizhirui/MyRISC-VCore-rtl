@@ -106,32 +106,32 @@ module top;
         wait_clk();
         bus_tcm_stbuf_wr = 'b0;
         wait_clk();
-        assert(tcm_bus_fetch_data == 'hcba5cbee_accca55a_90abcdef_12345678) else $finish;
-        assert(tcm_bus_stbuf_data == 'hcba5cbee_accca55a_90abcdef_12345678) else $finish;
+        assert(tcm_bus_fetch_data == 128'hcba5cbee_accca55a_90abcdef_12345678) else $finish;
+        assert(tcm_bus_stbuf_data == 128'hcba5cbee_accca55a_90abcdef_12345678) else $finish;
         wait_clk();
         bus_tcm_fetch_addr = 'h4;
         bus_tcm_stbuf_read_addr = 'h4;
         wait_clk();
-        assert(tcm_bus_fetch_data[95:0] == 'hcba5cbee_accca55a_90abcdef) else $finish;
-        assert(tcm_bus_stbuf_data[95:0] == 'hcba5cbee_accca55a_90abcdef) else $finish;
+        assert(tcm_bus_fetch_data[95:0] == 96'hcba5cbee_accca55a_90abcdef) else $finish;
+        assert(tcm_bus_stbuf_data[95:0] == 96'hcba5cbee_accca55a_90abcdef) else $finish;
         wait_clk();
         bus_tcm_fetch_addr = 'h5;
         bus_tcm_stbuf_read_addr = 'h5;
         wait_clk();
-        assert(tcm_bus_fetch_data[87:0] == 'hcba5cbee_accca55a_90abcd) else $finish;
-        assert(tcm_bus_stbuf_data[87:0] == 'hcba5cbee_accca55a_90abcd) else $finish;
+        assert(tcm_bus_fetch_data[87:0] == 88'hcba5cbee_accca55a_90abcd) else $finish;
+        assert(tcm_bus_stbuf_data[87:0] == 88'hcba5cbee_accca55a_90abcd) else $finish;
         wait_clk();
         bus_tcm_fetch_addr = 'h8;
         bus_tcm_stbuf_read_addr = 'h8;
         wait_clk();
-        assert(tcm_bus_fetch_data[63:0] == 'hcba5cbee_accca55a) else $finish;
-        assert(tcm_bus_stbuf_data[63:0] == 'hcba5cbee_accca55a) else $finish;
+        assert(tcm_bus_fetch_data[63:0] == 64'hcba5cbee_accca55a) else $finish;
+        assert(tcm_bus_stbuf_data[63:0] == 64'hcba5cbee_accca55a) else $finish;
         wait_clk();
         bus_tcm_fetch_addr = 'hc;
         bus_tcm_stbuf_read_addr = 'hc;
         wait_clk();
-        assert(tcm_bus_fetch_data[63:0] == 'haabbccdd_cba5cbee) else $finish;
-        assert(tcm_bus_stbuf_data[63:0] == 'haabbccdd_cba5cbee) else $finish;
+        assert(tcm_bus_fetch_data[63:0] == 64'haabbccdd_cba5cbee) else $finish;
+        assert(tcm_bus_stbuf_data[63:0] == 64'haabbccdd_cba5cbee) else $finish;
     endtask
 
     task test_sequence;
@@ -265,9 +265,11 @@ module top;
         $finish;
     end
 
-    initial begin
-        $fsdbDumpfile("top.fsdb");
-        $fsdbDumpvars(0, 0, "+all");
-        $fsdbDumpMDA();
-    end
+    `ifdef FSDB_DUMP
+        initial begin
+            $fsdbDumpfile("top.fsdb");
+            $fsdbDumpvars(0, 0, "+all");
+            $fsdbDumpMDA();
+        end
+    `endif
 endmodule

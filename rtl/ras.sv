@@ -105,7 +105,7 @@ module ras #(
                     if(i == ((DEPTH_WIDTH + 1)'(DEPTH) - 1)) begin
                         buffer_cnt[i] <= 'b1;
                     end
-                    else begin
+                    else if(unsigned'(i + 1) < DEPTH) begin
                         buffer_cnt[i] <= buffer_cnt[i + 1];
                     end
                 end

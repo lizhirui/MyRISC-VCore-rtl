@@ -2,18 +2,20 @@
 
 setenv SIM_ROOT_DIR `pwd`/..
 
+setenv SIM_SCRIPT_DIR `pwd`
+
 if ($1 == "basic") then
     set module = $2
 else if ($1 == "difftest") then
     setenv SIM_TRACE_NAME $2
     set module = $3
 else
-    echo "Usage: test_sim_run.sh <basic|difftest> [<trace_name>] <module>"
+    echo "Usage: run_vcs.sh <basic|difftest> [<trace_name>] <module>"
     exit 1
 endif
 
 cd ../tb/$1/$module/
-set nc_def = ""
+set nc_def = "FSDB_DUMP"
 #set plusargs = "-noIncrComp"
 set plusargs = +NULL
 set flist = "./flist.f" ;
@@ -71,4 +73,4 @@ endif
 
 ./simv +vcs+lic+wait -l ./simv.log
 
-cd ../sim
+cd $SIM_SCRIPT_DIR

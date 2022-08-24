@@ -194,8 +194,11 @@ module top;
         $display("TEST PASSED");
     end
 
-    initial begin
-        $fsdbDumpfile("top.fsdb");
-        $fsdbDumpvars();
-    end
+    `ifdef FSDB_DUMP
+        initial begin
+            $fsdbDumpfile("top.fsdb");
+            $fsdbDumpvars(0, 0, "+all");
+            $fsdbDumpMDA();
+        end
+    `endif
 endmodule

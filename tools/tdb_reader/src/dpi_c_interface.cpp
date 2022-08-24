@@ -95,7 +95,7 @@ extern "C"
 
     void tdb_get_vector(trace_reader *reader, int domain, const char *name, const svOpenArrayHandle out, uint32_t index)
     {
-        uint32_t size = svSizeOfArray(out);
+        uint32_t size = svSize(out, 1);
         void *buf = svGetArrayPtr(out);
         check_element_size(reader, domain, name, size);
         auto data = reader->read_field((domain_t)domain, name, index);

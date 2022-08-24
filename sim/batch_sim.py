@@ -1,5 +1,5 @@
 #!/bin/python3
-#*******************************************************************************
+#****************************************************************************************
 # Copyright lizhirui
 #
 # SPDX-License-Identifier: Apache-2.0
@@ -8,9 +8,11 @@
 # Date           Author       Notes
 # 2022-07-20     lizhirui     the first version
 # 2022-07-21     lizhirui     add time show support
-#*******************************************************************************
+# 2022-08-24     lizhirui     fixed exit bug and add xcelium support and warning check
+#****************************************************************************************
 from concurrent.futures import thread
 from pathlib import Path as path
+import sys
 import os
 import subprocess
 import threading
@@ -75,22 +77,46 @@ class dynamic_check_thread(threading.Thread):
 
         for item in self.local_task_list:
             cnt = cnt + 1
-            start_time = time.time()
+            retry_cnt = 0
+            
+            while True:
+                start_time = time.time()
 
-            if len(item) == 3:
-                ret = shell(["./test_sim_run.sh"] + [item[0], item[2], item[1]])
-            else:
-                ret = shell(["./test_sim_run.sh"] + item)
+                if len(item) == 3:
+                    ret = shell(["./run_xrun.sh"] + [item[0], item[2], item[1]])
+                else:
+                    ret = shell(["./run_xrun.sh"] + item)
 
-            end_time = time.time()
-            elapsed_time = to_human_friendly_time(end_time - start_time)
-                
-            case_name = ""
+                end_time = time.time()
+                elapsed_time = to_human_friendly_time(end_time - start_time)
+                    
+                case_name = ""
 
-            for x in item:
-                case_name += x + ", "
+                for x in item:
+                    case_name += x + ", "
 
-            case_name = case_name.rstrip(", ")
+                case_name = case_name.rstrip(", ")
+
+                if "was either corrupt or the file system cache consistency check failed" in ret:
+                    print_lock.acquire()
+
+                    if retry_cnt == 0:
+                        retry_cnt += 1
+                        
+                        if len(item) == 3:
+                            ret = shell(["./clean_xrun.sh"] + [item[0], item[2], item[1]])
+                        else:
+                            ret = shell(["./clean_xrun.sh"] + item)
+                        
+                        yellow_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Database Corrupted, Retry " + elapsed_time)
+                    else:
+                        yellow_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Database Corrupted, Retry Failed " + elapsed_time)
+                        print(ret)
+                        os._exit(0)
+
+                    print_lock.release()
+                else:
+                    break
 
             if "TEST PASSED" in ret:
                 print_lock.acquire()
@@ -106,8 +132,21 @@ class dynamic_check_thread(threading.Thread):
                 print_lock.acquire()
                 yellow_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Unknown Error " + elapsed_time)
                 print(ret)
-                exit(0)
+                os._exit(0)
                 unknown_error_cnt += 1
+                print_lock.release()
+
+            if "*W" in ret:
+                print_lock.acquire()
+                yellow_text("Warnings had been found: ")
+                print(ret)
+
+                if len(item) == 3:
+                    ret = shell(["./clean_xrun.sh"] + [item[0], item[2], item[1]])
+                else:
+                    ret = shell(["./clean_xrun.sh"] + item)
+
+                os._exit(0)
                 print_lock.release()
 
 total_start_time = time.time()

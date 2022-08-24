@@ -37,13 +37,13 @@ module multififo #(
     logic[DEPTH_WIDTH:0] used_space;
     logic[DEPTH_WIDTH:0] free_space;
 
-    logic[DEPTH_WIDTH:0] push_enable_num;
-    logic[DEPTH_WIDTH:0] pop_enable_num;
+    logic[$clog2(PORT_NUM):0] push_enable_num;
+    logic[$clog2(PORT_NUM):0] pop_enable_num;
 
-    logic[DEPTH_WIDTH:0] data_in_num;
+    logic[$clog2(PORT_NUM):0] data_in_num;
     logic[PORT_NUM - 1:0] data_in_valid_filtered;
 
-    logic[DEPTH_WIDTH:0] data_out_num;
+    logic[$clog2(PORT_NUM):0] data_out_num;
     logic[PORT_NUM - 1:0] data_out_valid_filtered;
 
     logic[WIDTH - 1:0] buffer[0:PORT_NUM - 1][0:DEPTH / PORT_NUM - 1];

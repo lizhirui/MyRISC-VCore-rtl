@@ -11,7 +11,7 @@ module expand_one #(
     genvar i;
 
     generate
-        for(i = 0;i < 2**WIDTH;i++) begin
+        for(i = 0;i < WIDTH;i++) begin
             assign data_out[i] = unsigned'(i) < data_in;
         end
     endgenerate

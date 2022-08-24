@@ -664,7 +664,7 @@
         check_align = ((addr & (size - 1)) == 'b0) ? 'b1 : 'b0;
     endfunction
 
-    virtual class sign_extend#(parameter IMM_LENGTH);
+    virtual class sign_extend#(parameter IMM_LENGTH = 12);
         static function logic[`REG_DATA_WIDTH - 1:0] _do(
                 input logic[IMM_LENGTH - 1:0] imm
             );
@@ -673,7 +673,7 @@
         endfunction
     endclass
 
-    virtual class sign_extend_double#(parameter IMM_LENGTH);
+    virtual class sign_extend_double#(parameter IMM_LENGTH = 12);
         static function logic[`REG_DATA_WIDTH * 2 - 1:0] _do(
                 input logic[IMM_LENGTH - 1:0] imm
             );
@@ -682,7 +682,7 @@
         endfunction
     endclass
 
-    virtual class unsign_extend_double#(parameter IMM_LENGTH);
+    virtual class unsign_extend_double#(parameter IMM_LENGTH = 12);
         static function logic[`REG_DATA_WIDTH * 2 - 1:0] _do(
                 input logic[IMM_LENGTH - 1:0] imm
             );

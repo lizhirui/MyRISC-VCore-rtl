@@ -93,7 +93,7 @@ module top;
         assert(fetch_decode_fifo_data_in_valid == 'b0) else $finish;
         assert(fetch_decode_fifo_push == 'b0) else $finish;
         assert(fetch_decode_fifo_flush == 'b0) else $finish;
-        bus_fetch_data = 'h83018213_c1810193_7d008113_3e800093;
+        bus_fetch_data = 128'h83018213_c1810193_7d008113_3e800093;
         eval();
         assert(fetch_bp_update_valid == 'b0) else $finish;
         assert(fetch_bp_valid == 'b0) else $finish;
@@ -185,7 +185,7 @@ module top;
         commit_feedback_pack.enable = 'b1;
         commit_feedback_pack.flush = 'b0;
         fetch_decode_fifo_data_in_enable = 'b1111;
-        bus_fetch_data = 'h83018213_c1810193_0000100f_3e800093;//fence.i = 0000100f
+        bus_fetch_data = 128'h83018213_c1810193_0000100f_3e800093;//fence.i = 0000100f
         eval();
         assert(fetch_bp_update_valid == 'b0) else $finish;
         assert(fetch_bp_valid == 'b0) else $finish;
@@ -199,7 +199,7 @@ module top;
         assert(fetch_decode_fifo_push == 'b1) else $finish;
         assert(fetch_decode_fifo_flush == 'b0) else $finish;
         wait_clk();
-        bus_fetch_data = 'h83018213_c1810193_3e800093_0000100f;//fence.i = 0000100f
+        bus_fetch_data = 128'h83018213_c1810193_3e800093_0000100f;//fence.i = 0000100f
         eval();
         assert(fetch_bp_update_valid == 'b0) else $finish;
         assert(fetch_bp_valid == 'b0) else $finish;
@@ -229,7 +229,7 @@ module top;
         assert(fetch_bus_addr == unsigned'(`INIT_PC + 40)) else $finish;
         assert(fetch_decode_fifo_data_in_valid == 'b1111) else $finish;
         wait_clk();
-        bus_fetch_data = 'h83018213_c1810193_3e800093_00109463;//00109463 = bne ra, ra, 8
+        bus_fetch_data = 128'h83018213_c1810193_3e800093_00109463;//00109463 = bne ra, ra, 8
         bp_fetch_valid = 'b1;
         bp_fetch_jump = 'b1;
         bp_fetch_next_pc = 'ha1b2c3d4;
@@ -295,7 +295,7 @@ module top;
         assert(fetch_decode_fifo_flush == 'b0) else $finish;
         assert(fetch_cpbuf_data.global_history == bp_fetch_global_history) else $finish;
         assert(fetch_cpbuf_data.local_history == bp_fetch_local_history) else $finish;
-        bus_fetch_data = 'h83018213_c1810193_00109463_3e800093;//00109463 = bne ra, ra, 8
+        bus_fetch_data = 128'h83018213_c1810193_00109463_3e800093;//00109463 = bne ra, ra, 8
         eval();
         assert(fetch_bp_pc == unsigned'(`INIT_PC + 44)) else $finish;
         assert(fetch_bp_instruction == 'h00109463) else $finish;
@@ -316,7 +316,7 @@ module top;
         assert(fetch_decode_fifo_flush == 'b0) else $finish;
         assert(fetch_cpbuf_data.global_history == bp_fetch_global_history) else $finish;
         assert(fetch_cpbuf_data.local_history == bp_fetch_local_history) else $finish;
-        bus_fetch_data = 'h00109463_83018213_c1810193_3e800093;//00109463 = bne ra, ra, 8
+        bus_fetch_data = 128'h00109463_83018213_c1810193_3e800093;//00109463 = bne ra, ra, 8
         eval();
         assert(fetch_bp_pc == unsigned'(`INIT_PC + 52)) else $finish;
         assert(fetch_bp_instruction == 'h00109463) else $finish;
@@ -350,9 +350,11 @@ module top;
         $finish;
     end
 
-    initial begin
-        $fsdbDumpfile("top.fsdb");
-        $fsdbDumpvars(0, 0, "+all");
-        $fsdbDumpMDA();
-    end
+    `ifdef FSDB_DUMP
+        initial begin
+            $fsdbDumpfile("top.fsdb");
+            $fsdbDumpvars(0, 0, "+all");
+            $fsdbDumpMDA();
+        end
+    `endif
 endmodule

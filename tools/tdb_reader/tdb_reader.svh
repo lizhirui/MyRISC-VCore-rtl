@@ -84,7 +84,7 @@
                 return tdb_get_uint64(reader, domain, name, index);
             endfunction
 
-            virtual class get_vector#(parameter VECTOR_LENGTH);
+            virtual class get_vector#(parameter VECTOR_LENGTH = 1);
                 static function logic[VECTOR_LENGTH - 1:0] _do(tdb_reader tdb_reader_obj, int domain, string name, int unsigned index);
                     localparam VECTOR_GROUP_NUM = (VECTOR_LENGTH + 8 - 1) / 8;
                     byte unsigned unpacked_buf[0:VECTOR_GROUP_NUM - 1];

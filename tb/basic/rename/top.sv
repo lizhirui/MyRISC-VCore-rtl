@@ -373,6 +373,7 @@ module top;
         issue_feedback_pack.stall = 'b0;
         commit_feedback_pack.enable = 'b1;
         commit_feedback_pack.flush = 'b1;
+        eval();
         assert(rename_readreg_port_we == 'b1) else $finish;
         assert(rename_readreg_port_flush == 'b1) else $finish;
         assert(rename_cpbuf_we == 'b0) else $finish;
@@ -381,6 +382,7 @@ module top;
         assert(decode_rename_fifo_pop == 'b0) else $finish;
         assert(rename_readreg_port_flush == 'b1) else $finish;
         issue_feedback_pack.stall = 'b1;
+        eval();
         assert(rename_readreg_port_we == 'b0) else $finish;
         assert(rename_readreg_port_flush == 'b1) else $finish;
         assert(rename_cpbuf_we == 'b0) else $finish;
@@ -390,6 +392,7 @@ module top;
         assert(rename_readreg_port_flush == 'b1) else $finish;
         assert(rename_feedback_pack.idle == 'b0) else $finish;
         decode_rename_fifo_data_out_valid = 'b0;
+        eval();
         assert(rename_feedback_pack.idle == 'b1) else $finish;
     endtask
 
@@ -404,9 +407,11 @@ module top;
         $finish;
     end
 
-    initial begin
-        $fsdbDumpfile("top.fsdb");
-        $fsdbDumpvars(0, 0, "+all");
-        $fsdbDumpMDA();
-    end
+    `ifdef FSDB_DUMP
+        initial begin
+            $fsdbDumpfile("top.fsdb");
+            $fsdbDumpvars(0, 0, "+all");
+            $fsdbDumpMDA();
+        end
+    `endif
 endmodule
