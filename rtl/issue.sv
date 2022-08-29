@@ -424,7 +424,7 @@ module issue(
             alu_index <= 'b0;
         end
         else if(!issue_iq_flush) begin
-            alu_index <= (alu_index + issue_alu_op_num) & (`DIV_UNIT_NUM - 1);
+            alu_index <= (alu_index + issue_alu_op_num) & (`ALU_UNIT_NUM - 1);
         end
     end
 

@@ -136,7 +136,7 @@ class dynamic_check_thread(threading.Thread):
                 unknown_error_cnt += 1
                 print_lock.release()
 
-            if "*W" in ret:
+            if "*W" in ret.replace("*W,BADPRF", ""):
                 print_lock.acquire()
                 yellow_text("Warnings had been found: ")
                 print(ret)

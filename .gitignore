@@ -13,6 +13,7 @@ stack.info.*
 simv
 novas.*
 vc_hdrs.h
+.indago_auto_save*
 *.a
 *.so
 *.o

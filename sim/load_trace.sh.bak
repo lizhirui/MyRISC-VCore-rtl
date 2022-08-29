@@ -1,0 +1,3 @@
+#!/bin/bash
+rm -rf ../trace
+advcp -rg ../trace_remote ../trace
