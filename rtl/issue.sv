@@ -89,6 +89,13 @@ module issue(
     logic[$clog2(`ISSUE_WIDTH):0] issue_lsu_op_num;
     logic[$clog2(`ISSUE_WIDTH):0] issue_mul_op_num;
 
+    logic[`max($clog2(`ALU_UNIT_NUM) - 1, 0):0] available_alu_index[0:`ALU_UNIT_NUM - 1];
+    logic[`max($clog2(`BRU_UNIT_NUM) - 1, 0):0] available_bru_index[0:`BRU_UNIT_NUM - 1];
+    logic[`max($clog2(`CSR_UNIT_NUM) - 1, 0):0] available_csr_index[0:`CSR_UNIT_NUM - 1];
+    logic[`max($clog2(`DIV_UNIT_NUM) - 1, 0):0] available_div_index[0:`DIV_UNIT_NUM - 1];
+    logic[`max($clog2(`LSU_UNIT_NUM) - 1, 0):0] available_lsu_index[0:`LSU_UNIT_NUM - 1];
+    logic[`max($clog2(`MUL_UNIT_NUM) - 1, 0):0] available_mul_index[0:`MUL_UNIT_NUM - 1];
+
     logic[`max($clog2(`ALU_UNIT_NUM) - 1, 0):0] send_alu_index[0:`ISSUE_WIDTH - 1];
     logic[`max($clog2(`BRU_UNIT_NUM) - 1, 0):0] send_bru_index[0:`ISSUE_WIDTH - 1];
     logic[`max($clog2(`CSR_UNIT_NUM) - 1, 0):0] send_csr_index[0:`ISSUE_WIDTH - 1];
@@ -138,6 +145,8 @@ module issue(
     logic lsu_has_exception;
     riscv_exception_t::_type lsu_exception_id;
 
+    issue_execute_pack_t iq_issue_data_converted[0:OUTPUT_PORT_NUM - 1];
+
     genvar i, j;
 
     assign rev_pack = readreg_issue_port_data_out;
@@ -167,8 +176,49 @@ module issue(
         .issue_mul_fifo_full(issue_mul_fifo_full),
         .iq_issue_issue_execute_fifo_full_add(issue_csrf_issue_execute_fifo_full_add),
         .execute_feedback_pack(execute_feedback_pack),
-        .wb_feedback_pack(wb_feedback_pack)
+        .wb_feedback_pack(wb_feedback_pack),
+        .commit_feedback_pack(commit_feedback_pack)
     );
+
+    generate
+        for(i = 0;i < OUTPUT_PORT_NUM;i++) begin
+            assign iq_issue_data_converted[i].enable = iq_issue_data[i].enable;
+            assign iq_issue_data_converted[i].value = iq_issue_data[i].value;
+            assign iq_issue_data_converted[i].valid = iq_issue_data[i].valid;
+            assign iq_issue_data_converted[i].rob_id = iq_issue_data[i].rob_id;
+            assign iq_issue_data_converted[i].pc = iq_issue_data[i].pc;
+            assign iq_issue_data_converted[i].imm = iq_issue_data[i].imm;
+            assign iq_issue_data_converted[i].has_exception = iq_issue_data[i].has_exception;
+            assign iq_issue_data_converted[i].exception_id = iq_issue_data[i].exception_id;
+            assign iq_issue_data_converted[i].exception_value = iq_issue_data[i].exception_value;
+            assign iq_issue_data_converted[i].predicted = iq_issue_data[i].predicted;
+            assign iq_issue_data_converted[i].predicted_jump = iq_issue_data[i].predicted_jump;
+            assign iq_issue_data_converted[i].predicted_next_pc = iq_issue_data[i].predicted_next_pc;
+            assign iq_issue_data_converted[i].checkpoint_id_valid = iq_issue_data[i].checkpoint_id_valid;
+            assign iq_issue_data_converted[i].checkpoint_id = iq_issue_data[i].checkpoint_id;
+            assign iq_issue_data_converted[i].rs1 = iq_issue_data[i].rs1;
+            assign iq_issue_data_converted[i].arg1_src = iq_issue_data[i].arg1_src;
+            assign iq_issue_data_converted[i].rs1_need_map = iq_issue_data[i].rs1_need_map;
+            assign iq_issue_data_converted[i].rs1_phy = iq_issue_data[i].rs1_phy;
+            assign iq_issue_data_converted[i].src1_value = iq_issue_data[i].src1_value;
+            assign iq_issue_data_converted[i].src1_loaded = iq_issue_data[i].src1_loaded;
+            assign iq_issue_data_converted[i].rs2 = iq_issue_data[i].rs2;
+            assign iq_issue_data_converted[i].arg2_src = iq_issue_data[i].arg2_src;
+            assign iq_issue_data_converted[i].rs2_need_map = iq_issue_data[i].rs2_need_map;
+            assign iq_issue_data_converted[i].rs2_phy = iq_issue_data[i].rs2_phy;
+            assign iq_issue_data_converted[i].src2_value = iq_issue_data[i].src2_value;
+            assign iq_issue_data_converted[i].src2_loaded = iq_issue_data[i].src2_loaded;
+            assign iq_issue_data_converted[i].rd = iq_issue_data[i].rd;
+            assign iq_issue_data_converted[i].rd_enable = iq_issue_data[i].rd_enable;
+            assign iq_issue_data_converted[i].need_rename = iq_issue_data[i].need_rename;
+            assign iq_issue_data_converted[i].rd_phy = iq_issue_data[i].rd_phy;
+            assign iq_issue_data_converted[i].csr = iq_issue_data[i].csr;
+            assign iq_issue_data_converted[i].lsu_addr = iq_issue_data[i].src1_value + iq_issue_data[i].imm;
+            assign iq_issue_data_converted[i].op = iq_issue_data[i].op;
+            assign iq_issue_data_converted[i].op_unit = iq_issue_data[i].op_unit;
+            assign iq_issue_data_converted[i].sub_op = iq_issue_data[i].sub_op;
+        end
+    endgenerate
 
     //--------------------------------------------------------------------input part-----------------------------------------------------------------------------
     //--------------------------------------------------------------------input part-----------------------------------------------------------------------------
@@ -418,13 +468,61 @@ module issue(
         .sum(issue_mul_op_num)
     );
 
+    list_enabled_item_id #(
+        .ITEM_NUM(`ALU_UNIT_NUM)
+    )list_enabled_item_id_alu_inst(
+        .seq(~issue_alu_fifo_full),
+        .start_pos(alu_index),
+        .enabled_item_id(available_alu_index)
+    );
+
+    list_enabled_item_id #(
+        .ITEM_NUM(`BRU_UNIT_NUM)
+    )list_enabled_item_id_bru_inst(
+        .seq(~issue_bru_fifo_full),
+        .start_pos(bru_index),
+        .enabled_item_id(available_bru_index)
+    );
+
+    list_enabled_item_id #(
+        .ITEM_NUM(`CSR_UNIT_NUM)
+    )list_enabled_item_id_csr_inst(
+        .seq(~issue_csr_fifo_full),
+        .start_pos(csr_index),
+        .enabled_item_id(available_csr_index)
+    );
+
+    list_enabled_item_id #(
+        .ITEM_NUM(`DIV_UNIT_NUM)
+    )list_enabled_item_id_div_inst(
+        .seq(~issue_div_fifo_full),
+        .start_pos(div_index),
+        .enabled_item_id(available_div_index)
+    );
+
+    list_enabled_item_id #(
+        .ITEM_NUM(`LSU_UNIT_NUM)
+    )list_enabled_item_id_lsu_inst(
+        .seq(~issue_lsu_fifo_full),
+        .start_pos(lsu_index),
+        .enabled_item_id(available_lsu_index)
+    );
+
+    list_enabled_item_id #(
+        .ITEM_NUM(`MUL_UNIT_NUM)
+    )list_enabled_item_id_mul_inst(
+        .seq(~issue_mul_fifo_full),
+        .start_pos(mul_index),
+        .enabled_item_id(available_mul_index)
+    );
+
     //use round-robin algorithm to update next execute unit index
     always_ff @(posedge clk) begin
         if(rst) begin
             alu_index <= 'b0;
         end
-        else if(!issue_iq_flush) begin
-            alu_index <= (alu_index + issue_alu_op_num) & (`ALU_UNIT_NUM - 1);
+        else if(!issue_iq_flush && (issue_alu_op_num != 'b0)) begin
+            alu_index <= (available_alu_index[`max($clog2($size(available_alu_index)), 1)'(issue_alu_op_num - 1)] + 'b1) & (`ALU_UNIT_NUM - 1);
         end
     end
 
@@ -432,8 +530,8 @@ module issue(
         if(rst) begin
             bru_index <= 'b0;
         end
-        else if(!issue_iq_flush) begin
-            bru_index <= (bru_index + issue_bru_op_num) & (`BRU_UNIT_NUM - 1);
+        else if(!issue_iq_flush && (issue_bru_op_num != 'b0)) begin
+            bru_index <= (available_bru_index[`max($clog2($size(available_bru_index)), 1)'(issue_bru_op_num - 1)] + 'b1) & (`BRU_UNIT_NUM - 1);
         end
     end
 
@@ -441,8 +539,8 @@ module issue(
         if(rst) begin
             csr_index <= 'b0;
         end
-        else if(!issue_iq_flush) begin
-            csr_index <= (csr_index + issue_csr_op_num) & (`CSR_UNIT_NUM - 1);
+        else if(!issue_iq_flush && (issue_csr_op_num != 'b0)) begin
+            csr_index <= (available_csr_index[`max($clog2($size(available_csr_index)), 1)'(issue_csr_op_num - 1)] + 'b1) & (`CSR_UNIT_NUM - 1);
         end
     end
 
@@ -450,8 +548,8 @@ module issue(
         if(rst) begin
             div_index <= 'b0;
         end
-        else if(!issue_iq_flush) begin
-            div_index <= (div_index + issue_div_op_num) & (`DIV_UNIT_NUM - 1);
+        else if(!issue_iq_flush && (issue_div_op_num != 'b0)) begin
+            div_index <= (available_div_index[`max($clog2($size(available_div_index)), 1)'(issue_div_op_num - 1)] + 'b1) & (`DIV_UNIT_NUM - 1);
         end
     end
 
@@ -459,8 +557,8 @@ module issue(
         if(rst) begin
             lsu_index <= 'b0;
         end
-        else if(!issue_iq_flush) begin
-            lsu_index <= (lsu_index + issue_lsu_op_num) & (`LSU_UNIT_NUM - 1);
+        else if(!issue_iq_flush && (issue_lsu_op_num != 'b0)) begin
+            lsu_index <= (available_lsu_index[`max($clog2($size(available_lsu_index)), 1)'(issue_lsu_op_num - 1)] + 'b1) & (`LSU_UNIT_NUM - 1);
         end
     end
 
@@ -468,8 +566,8 @@ module issue(
         if(rst) begin
             mul_index <= 'b0;
         end
-        else if(!issue_iq_flush) begin
-            mul_index <= (mul_index + issue_mul_op_num) & (`MUL_UNIT_NUM - 1);
+        else if(!issue_iq_flush && (issue_mul_op_num != 'b0)) begin
+            mul_index <= (available_mul_index[`max($clog2($size(available_mul_index)), 1)'(issue_mul_op_num - 1)] + 'b1) & (`MUL_UNIT_NUM - 1);
         end
     end
 
@@ -477,12 +575,12 @@ module issue(
     generate
         for(i = 0;i < `ISSUE_WIDTH;i = i + 1) begin
             if(i == 0) begin
-                assign send_alu_index[i] = alu_index;
-                assign send_bru_index[i] = bru_index;
-                assign send_csr_index[i] = csr_index;
-                assign send_div_index[i] = div_index;
-                assign send_lsu_index[i] = lsu_index;
-                assign send_mul_index[i] = mul_index;
+                assign send_alu_index[i] = 'b0;
+                assign send_bru_index[i] = 'b0;
+                assign send_csr_index[i] = 'b0;
+                assign send_div_index[i] = 'b0;
+                assign send_lsu_index[i] = 'b0;
+                assign send_mul_index[i] = 'b0;
             end
             else begin
                 assign send_alu_index[i] = send_alu_index[i - 1] + ((iq_issue_data_valid[i - 1] && (iq_issue_data[i - 1].op_unit == op_unit_t::alu)) ? 'b1 : 'b0);
@@ -499,7 +597,7 @@ module issue(
     generate
         for(i = 0;i < `ALU_UNIT_NUM;i = i + 1) begin: alu_send_inst_generate
             for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
-                assign alu_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::alu) && (send_alu_index[j] == i);
+                assign alu_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::alu) && (available_alu_index[send_alu_index[j]] == i);
             end
 
             parallel_finder #(
@@ -510,7 +608,7 @@ module issue(
                 .index_valid(alu_send_inst_index_valid[i])
             );
 
-            assign issue_alu_fifo_data_in[i] = iq_issue_data[alu_send_inst_index[i]];
+            assign issue_alu_fifo_data_in[i] = iq_issue_data_converted[alu_send_inst_index[i]];
             assign issue_alu_fifo_push[i] = alu_send_inst_index_valid[i];
             assign issue_alu_fifo_flush[i] = issue_iq_flush;
         end
@@ -519,7 +617,7 @@ module issue(
     generate
         for(i = 0;i < `BRU_UNIT_NUM;i = i + 1) begin: bru_send_inst_generate
             for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
-                assign bru_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::bru) && (send_bru_index[j] == i);
+                assign bru_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::bru) && (available_bru_index[send_bru_index[j]] == i);
             end
 
             parallel_finder #(
@@ -530,7 +628,7 @@ module issue(
                 .index_valid(bru_send_inst_index_valid[i])
             );
 
-            assign issue_bru_fifo_data_in[i] = iq_issue_data[bru_send_inst_index[i]];
+            assign issue_bru_fifo_data_in[i] = iq_issue_data_converted[bru_send_inst_index[i]];
             assign issue_bru_fifo_push[i] = bru_send_inst_index_valid[i];
             assign issue_bru_fifo_flush[i] = issue_iq_flush;
         end
@@ -539,7 +637,7 @@ module issue(
     generate
         for(i = 0;i < `CSR_UNIT_NUM;i = i + 1) begin: csr_send_inst_generate
             for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
-                assign csr_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::csr) && (send_csr_index[j] == i);
+                assign csr_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::csr) && (available_csr_index[send_csr_index[j]] == i);
             end
 
             parallel_finder #(
@@ -550,7 +648,7 @@ module issue(
                 .index_valid(csr_send_inst_index_valid[i])
             );
 
-            assign issue_csr_fifo_data_in[i] = iq_issue_data[csr_send_inst_index[i]];
+            assign issue_csr_fifo_data_in[i] = iq_issue_data_converted[csr_send_inst_index[i]];
             assign issue_csr_fifo_push[i] = csr_send_inst_index_valid[i];
             assign issue_csr_fifo_flush[i] = issue_iq_flush;
         end
@@ -559,7 +657,7 @@ module issue(
     generate
         for(i = 0;i < `DIV_UNIT_NUM;i = i + 1) begin: div_send_inst_generate
             for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
-                assign div_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::div) && (send_div_index[j] == i);
+                assign div_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::div) && (available_div_index[send_div_index[j]] == i);
             end
 
             parallel_finder #(
@@ -570,7 +668,7 @@ module issue(
                 .index_valid(div_send_inst_index_valid[i])
             );
 
-            assign issue_div_fifo_data_in[i] = iq_issue_data[div_send_inst_index[i]];
+            assign issue_div_fifo_data_in[i] = iq_issue_data_converted[div_send_inst_index[i]];
             assign issue_div_fifo_push[i] = div_send_inst_index_valid[i];
             assign issue_div_fifo_flush[i] = issue_iq_flush;
         end
@@ -579,7 +677,7 @@ module issue(
     generate
         for(i = 0;i < `LSU_UNIT_NUM;i = i + 1) begin: lsu_send_inst_generate
             for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
-                assign lsu_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::lsu) && (send_lsu_index[j] == i);
+                assign lsu_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::lsu) && (available_lsu_index[send_lsu_index[j]] == i);
             end
 
             parallel_finder #(
@@ -590,7 +688,7 @@ module issue(
                 .index_valid(lsu_send_inst_index_valid[i])
             );
 
-            assign issue_lsu_fifo_data_in[i] = iq_issue_data[lsu_send_inst_index[i]];
+            assign issue_lsu_fifo_data_in[i] = iq_issue_data_converted[lsu_send_inst_index[i]];
             assign issue_lsu_fifo_push[i] = lsu_send_inst_index_valid[i];
             assign issue_lsu_fifo_flush[i] = issue_iq_flush;
         end
@@ -599,7 +697,7 @@ module issue(
     generate
         for(i = 0;i < `MUL_UNIT_NUM;i = i + 1) begin: mul_send_inst_generate
             for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
-                assign mul_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::mul) && (send_mul_index[j] == i);
+                assign mul_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::mul) && (available_mul_index[send_mul_index[j]] == i);
             end
 
             parallel_finder #(
@@ -610,14 +708,14 @@ module issue(
                 .index_valid(mul_send_inst_index_valid[i])
             );
 
-            assign issue_mul_fifo_data_in[i] = iq_issue_data[mul_send_inst_index[i]];
+            assign issue_mul_fifo_data_in[i] = iq_issue_data_converted[mul_send_inst_index[i]];
             assign issue_mul_fifo_push[i] = mul_send_inst_index_valid[i];
             assign issue_mul_fifo_flush[i] = issue_iq_flush;
         end
     endgenerate
 
     //AGU -- preload load addr
-    assign issue_stbuf_read_addr = issue_lsu_fifo_data_in[0].src1_value + issue_lsu_fifo_data_in[0].imm;
+    assign issue_stbuf_read_addr = issue_lsu_fifo_data_in[0].lsu_addr;
     
     always_comb begin
         case(issue_lsu_fifo_data_in[0].sub_op.lsu_op)

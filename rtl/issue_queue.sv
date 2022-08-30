@@ -192,7 +192,7 @@ module issue_queue #(
                                         && (|unit_remain_num[0]) //idle execute unit is exist
                                         && (!fence_trigger[0]) //no fence behavior occurs
                                         && (((buffer_feedback[0].op_unit != op_unit_t::csr) && (buffer_feedback[0].op != op_t::mret)) || 
-                                        ((commit_feedback_pack.next_handle_rob_id == buffer_feedback[0].rob_id)));
+                                        (commit_feedback_pack.next_handle_rob_id_valid && (commit_feedback_pack.next_handle_rob_id == buffer_feedback[0].rob_id)));
                                         //csr or mret instruction must be issued only when that's the first issued instruction at this time
                                         //and corresponding rob_id must be next_handle_rob_id
 

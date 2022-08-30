@@ -4,4 +4,6 @@ top.sv
 ../../../rtl/count_one.sv
 ../../../rtl/parallel_finder.sv
 ../../../rtl/data_selector.sv
+../../../rtl/list_enabled_item_id.sv
+../../../rtl/priority_finder.sv
 +incdir+../../../rtl

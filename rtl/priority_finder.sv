@@ -6,13 +6,13 @@ module priority_finder #(
         parameter WIDTH = 1//must be the power of 2
     )(
         input logic[WIDTH - 1:0] data_in,
-        output logic[$clog2(WIDTH) - 1:0] index,
+        output logic[`max($clog2(WIDTH) - 1, 0):0] index,
         output logic index_valid
     );
 
     genvar i;
 
-    logic[$clog2(WIDTH) - 1:0] index_temp[0:WIDTH - 1];
+    logic[`max($clog2(WIDTH) - 1, 0):0] index_temp[0:WIDTH - 1];
     logic[WIDTH - 1:0] index_valid_temp;
 
     assign index_temp[0] = 'd0;

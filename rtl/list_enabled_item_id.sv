@@ -5,16 +5,16 @@ module list_enabled_item_id #(
         parameter ITEM_NUM = 8//must be the power of 2
     )(
         input logic[ITEM_NUM - 1:0] seq,
-        input logic[$clog2(ITEM_NUM) - 1:0] start_pos,
-        output logic[$clog2(ITEM_NUM) - 1:0] enabled_item_id[0:ITEM_NUM - 1]
+        input logic[`max($clog2(ITEM_NUM) - 1, 0):0] start_pos,
+        output logic[`max($clog2(ITEM_NUM) - 1, 0):0] enabled_item_id[0:ITEM_NUM - 1]
     );
 
     logic[ITEM_NUM - 1:0] seq_shifted;
-    logic[$clog2(ITEM_NUM) - 1:0] seq_out_pos[0:ITEM_NUM - 1];
+    logic[`max($clog2(ITEM_NUM) - 1, 0):0] seq_out_pos[0:ITEM_NUM - 1];
     logic[ITEM_NUM - 1:0] seq_out_pos_cmp[0:ITEM_NUM - 1];
-    logic[$clog2(ITEM_NUM) - 1:0] seq_out_pos_index[0:ITEM_NUM - 1];
-    logic[$clog2(ITEM_NUM) - 1:0] seq_out[0:ITEM_NUM - 1];
-    logic[$clog2(ITEM_NUM) - 1:0] seq_out_fix[0:ITEM_NUM - 1];
+    logic[`max($clog2(ITEM_NUM) - 1, 0):0] seq_out_pos_index[0:ITEM_NUM - 1];
+    logic[`max($clog2(ITEM_NUM) - 1, 0):0] seq_out[0:ITEM_NUM - 1];
+    logic[`max($clog2(ITEM_NUM) - 1, 0):0] seq_out_fix[0:ITEM_NUM - 1];
 
     genvar i, j;
 
@@ -43,7 +43,7 @@ module list_enabled_item_id #(
             );
 
             assign seq_out[i] = seq_out_pos_index[i];
-            assign seq_out_fix[i] = $clog2(ITEM_NUM)'(seq_out[i] + start_pos);
+            assign seq_out_fix[i] = `max($clog2(ITEM_NUM), 1)'(seq_out[i] + start_pos);
         end
     endgenerate
 
