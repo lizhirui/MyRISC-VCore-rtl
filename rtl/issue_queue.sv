@@ -191,6 +191,7 @@ module issue_queue #(
                                         && (buffer_feedback[0].src1_loaded && buffer_feedback[0].src2_loaded) //source operators are all ready
                                         && (|unit_remain_num[0]) //idle execute unit is exist
                                         && (!fence_trigger[0]) //no fence behavior occurs
+                                        && (!is_inst_waiting || inst_waiting_ok) //no waiting instruction
                                         && (((buffer_feedback[0].op_unit != op_unit_t::csr) && (buffer_feedback[0].op != op_t::mret)) || 
                                         (commit_feedback_pack.next_handle_rob_id_valid && (commit_feedback_pack.next_handle_rob_id == buffer_feedback[0].rob_id)));
                                         //csr or mret instruction must be issued only when that's the first issued instruction at this time
@@ -218,8 +219,9 @@ module issue_queue #(
                                             && (buffer_feedback[i].src1_loaded && buffer_feedback[i].src2_loaded) //source operators are all ready
                                             && (|unit_remain_num[i]) //idle execute unit is exist
                                             && (!need_to_exit[i - 1]) //last item isn't the last item
-                                            && (cur_output_index[i - 1] < OUTPUT_PORT_NUM) //enough output port is exist
+                                            && (cur_output_index[i] < OUTPUT_PORT_NUM) //enough output port is exist
                                             && (!fence_trigger[i]) //no fence behavior occurs
+                                            && (!is_inst_waiting || inst_waiting_ok) //no waiting instruction
                                             && ((buffer_feedback[i].op_unit != op_unit_t::lsu) || (!has_lsu_op_input[i])) //lsu instruction doesn't support out-of-order execute
                                             && ((buffer_feedback[i].op_unit != op_unit_t::csr) && (buffer_feedback[i].op != op_t::mret));
                                             //csr or mret instruction must be issued only when that's the first issued instruction at this time
@@ -292,12 +294,9 @@ module issue_queue #(
             is_inst_waiting <= 'b0;
             inst_waiting_rob_id <= 'b0;
         end
-        else if(!is_inst_waiting) begin
+        else if(!is_inst_waiting || inst_waiting_ok) begin
             is_inst_waiting <= is_inst_waiting_next;
-            inst_waiting_rob_id <= inst_waiting_rob_id;
-        end
-        else if(inst_waiting_ok) begin
-            is_inst_waiting <= 'b0;
+            inst_waiting_rob_id <= inst_waiting_rob_id_next;
         end
     end
 
@@ -327,7 +326,7 @@ module issue_queue #(
     //generate wptr_next
     //this process has two part, one part is invalid item number, another part is input item number
     //when a instruction retiring event is waiting, other instructions are probihited to issue, so invalid item number is 0
-    assign wptr_next = wptr - ((is_inst_waiting && !inst_waiting_ok) ? 'b0 : buffer_item_invalid_num) + (issue_iq_push ? wptr_ext_incr : 'b0);
+    assign wptr_next = wptr - buffer_item_invalid_num + (issue_iq_push ? wptr_ext_incr : 'b0);
 
     //generate wptr
     always_ff @(posedge clk) begin
@@ -460,7 +459,7 @@ module issue_queue #(
         assign buffer_map_dst[0] = 'b0;
 
         for(i = 1;i < DEPTH;i = i + 1) begin
-            assign buffer_map_dst[i] = (buffer_map_dst_valid[i] && buffer_map_dst_valid[i - 1]) ? (buffer_map_dst[i - 1] + 'b1) : buffer_map_dst[i - 1];
+            assign buffer_map_dst[i] = buffer_map_dst_valid[i - 1] ? (buffer_map_dst[i - 1] + 'b1) : buffer_map_dst[i - 1];
         end
     endgenerate
 

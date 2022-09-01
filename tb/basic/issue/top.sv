@@ -345,6 +345,11 @@ module top;
         assert(issue_lsu_fifo_flush == 'b0) else $finish;
         assert(issue_mul_fifo_flush == 'b0) else $finish;
 
+        //clear csr waiting state
+        rst = 1;
+        wait_clk();
+        rst = 0;
+
         //one div op test
         for(i = 0;i < `DIV_UNIT_NUM;i++) begin
             readreg_issue_port_data_out.op_info[i].enable = 'b1;

@@ -188,9 +188,9 @@ module issue(
             assign iq_issue_data_converted[i].rob_id = iq_issue_data[i].rob_id;
             assign iq_issue_data_converted[i].pc = iq_issue_data[i].pc;
             assign iq_issue_data_converted[i].imm = iq_issue_data[i].imm;
-            assign iq_issue_data_converted[i].has_exception = iq_issue_data[i].has_exception;
-            assign iq_issue_data_converted[i].exception_id = iq_issue_data[i].exception_id;
-            assign iq_issue_data_converted[i].exception_value = iq_issue_data[i].exception_value;
+            assign iq_issue_data_converted[i].has_exception = (iq_issue_data[i].valid && (iq_issue_data[i].op_unit == op_unit_t::lsu)) ? lsu_has_exception : iq_issue_data[i].has_exception;
+            assign iq_issue_data_converted[i].exception_id = (iq_issue_data[i].valid && (iq_issue_data[i].op_unit == op_unit_t::lsu)) ? lsu_exception_id : iq_issue_data[i].exception_id;
+            assign iq_issue_data_converted[i].exception_value = (iq_issue_data[i].valid && (iq_issue_data[i].op_unit == op_unit_t::lsu)) ? (iq_issue_data[i].src1_value + iq_issue_data[i].imm) : iq_issue_data[i].exception_value;
             assign iq_issue_data_converted[i].predicted = iq_issue_data[i].predicted;
             assign iq_issue_data_converted[i].predicted_jump = iq_issue_data[i].predicted_jump;
             assign iq_issue_data_converted[i].predicted_next_pc = iq_issue_data[i].predicted_next_pc;

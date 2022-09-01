@@ -25,8 +25,8 @@ set fsdb_opts = '';
 set notiming = "-notimingcheck";
 set coverage_opts = ""; 
 set assert_opts = "";
-set ida_dump = "-input $SIM_SCRIPT_DIR/xcelium_ida_dump.tcl -access +rwc -accessreg +rwc -debug -linedebug -uvmlinedebug -classlinedebug -plidebug -fsmdebug"
-#set ida_dump = ""
+#set ida_dump = "-input $SIM_SCRIPT_DIR/xcelium_ida_dump.tcl -access +rwc -accessreg +rwc -debug -linedebug -uvmlinedebug -classlinedebug -plidebug -fsmdebug"
+set ida_dump = ""
 
 set OS=`uname -s`
 

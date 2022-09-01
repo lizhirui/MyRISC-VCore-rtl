@@ -460,6 +460,7 @@ module top;
         assert(iq_issue_issue_execute_fifo_full_add == 'b0) else $finish;
         //set next_rob_id
         commit_feedback_pack.next_handle_rob_id = 'h3;
+        commit_feedback_pack.next_handle_rob_id_valid = 'b1;
         eval();
         assert(iq_issue_data_channel_enable == 'b1111) else $finish;
         assert(iq_issue_full == 'b0) else $finish;
