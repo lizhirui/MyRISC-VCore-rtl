@@ -266,18 +266,16 @@ module top;
             commit_feedback_pack.next_pc = tdb.get_uint32(DOMAIN_INPUT, "commit_feedback_pack.next_pc", 0);
             eval();
 
-            for(i = 0;i < `READREG_WIDTH;i++) begin
-                /*for(j = 0;j < 2;j++) begin
-                    `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "issue_phyf_id", i * 2 + j), issue_phyf_id[i][j])
-                end*/
+            if(!(commit_feedback_pack.enable && commit_feedback_pack.flush)) begin
+                for(i = 0;i < `READREG_WIDTH;i++) begin
+                    if(readreg_issue_port_data_out.op_info[i].enable && readreg_issue_port_data_out.op_info[i].valid) begin
+                        if(!readreg_issue_port_data_out.op_info[i].src1_loaded) begin
+                            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "issue_phyf_id", i * 2), issue_phyf_id[i][0])
+                        end
 
-                if(readreg_issue_port_data_out.op_info[i].enable && readreg_issue_port_data_out.op_info[i].valid) begin
-                    if(!readreg_issue_port_data_out.op_info[i].src1_loaded) begin
-                        `assert_equal(cur_cycle, readreg_issue_port_data_out.op_info[i].rs1_phy, issue_phyf_id[i][0])
-                    end
-
-                    if(!readreg_issue_port_data_out.op_info[i].src2_loaded) begin
-                        `assert_equal(cur_cycle, readreg_issue_port_data_out.op_info[i].rs2_phy, issue_phyf_id[i][1])
+                        if(!readreg_issue_port_data_out.op_info[i].src2_loaded) begin
+                            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "issue_phyf_id", i * 2 + 1), issue_phyf_id[i][1])
+                        end
                     end
                 end
             end
