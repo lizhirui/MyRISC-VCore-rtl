@@ -17,6 +17,12 @@ module top;
     logic three_bp_ras_pop;
     logic[`ADDR_WIDTH - 1:0] three_ras_bp_addr;
 
+    logic big_ras_csrf_ras_full_add;
+    logic[`ADDR_WIDTH - 1:0] big_bp_ras_addr;
+    logic big_bp_ras_push;
+    logic big_bp_ras_pop;
+    logic[`ADDR_WIDTH - 1:0] big_ras_bp_addr;
+
     integer i;
     
     ras#(
@@ -34,8 +40,23 @@ module top;
         .ras_bp_addr(three_ras_bp_addr)
     );
 
+    ras#(
+        .DEPTH(`RAS_SIZE)
+    )ras_big_inst(
+        .*,
+        .ras_csrf_ras_full_add(big_ras_csrf_ras_full_add),
+        .bp_ras_addr(big_bp_ras_addr),
+        .bp_ras_push(big_bp_ras_push),
+        .bp_ras_pop(big_bp_ras_pop),
+        .ras_bp_addr(big_ras_bp_addr)
+    );
+
     task wait_clk;
         @(posedge clk);
+        #0.1;
+    endtask
+
+    task eval;
         #0.1;
     endtask
 
@@ -197,10 +218,10 @@ module top;
         wait_clk();
         assert(three_ras_bp_addr == 'b1001) else $finish;
         assert(three_ras_csrf_ras_full_add == 'b0) else $finish;
-        three_bp_ras_addr = 'b1001;
+        three_bp_ras_addr = 'b1110;
         three_bp_ras_push = 'b1;
         wait_clk();
-        assert(three_ras_bp_addr == 'b1001) else $finish;
+        assert(three_ras_bp_addr == 'b1110) else $finish;
         assert(three_ras_csrf_ras_full_add == 'b0) else $finish;
         three_bp_ras_addr = 'b1111;
         three_bp_ras_pop = 'b1;
@@ -222,6 +243,128 @@ module top;
         assert(three_ras_csrf_ras_full_add == 'b0) else $finish;
     endtask
 
+    task test_big;
+        rst = 1;
+        big_bp_ras_addr = 'b0;
+        big_bp_ras_push = 'b0;
+        big_bp_ras_pop = 'b0;
+        wait_clk();
+        rst = 0;
+        wait_clk();
+
+        for(i = 0;i < `RAS_SIZE;i++) begin
+            big_bp_ras_addr = i;
+            big_bp_ras_push = 'b1;
+            wait_clk();
+            assert(big_ras_bp_addr == i) else $finish;
+            assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+        end
+        
+        big_bp_ras_addr = `RAS_SIZE - 1;
+        big_bp_ras_push = 'b1;
+        big_bp_ras_pop = 'b0;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        //push 80008148
+        big_bp_ras_addr = 'h80008148;
+        big_bp_ras_push = 'b1;
+        big_bp_ras_pop = 'b0;
+        eval();
+        assert(ras_big_inst.need_throw == 'b1) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80008148) else $finish;
+        //assert(big_ras_csrf_ras_full_add == 'b1) else $finish;
+        //push 80008684
+        big_bp_ras_addr = 'h80008684;
+        big_bp_ras_push = 'b1;
+        big_bp_ras_pop = 'b0;
+        eval();
+        assert(ras_big_inst.need_throw == 'b1) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80008684) else $finish;
+        //assert(big_ras_csrf_ras_full_add == 'b1) else $finish;
+        //push 80006308
+        big_bp_ras_addr = 'h80006308;
+        big_bp_ras_push = 'b1;
+        big_bp_ras_pop = 'b0;
+        eval();
+        assert(ras_big_inst.need_throw == 'b1) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80006308) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b1) else $finish;
+        //pop 80006308
+        big_bp_ras_push = 'b0;
+        big_bp_ras_pop = 'b1;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80008684) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+        //push 80006338
+        big_bp_ras_addr = 'h80006338;
+        big_bp_ras_push = 'b1;
+        big_bp_ras_pop = 'b0;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80006338) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+        //pop 80006338
+        big_bp_ras_push = 'b0;
+        big_bp_ras_pop = 'b1;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80008684) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+        //push 80006368
+        big_bp_ras_addr = 'h80006368;
+        big_bp_ras_push = 'b1;
+        big_bp_ras_pop = 'b0;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80006368) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+        //pop 80006368
+        big_bp_ras_push = 'b0;
+        big_bp_ras_pop = 'b1;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80008684) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+        //push 80006398
+        big_bp_ras_addr = 'h80006398;
+        big_bp_ras_push = 'b1;
+        big_bp_ras_pop = 'b0;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80006398) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+        //pop 80006398
+        big_bp_ras_push = 'b0;
+        big_bp_ras_pop = 'b1;
+        eval();
+        assert(ras_big_inst.need_throw == 'b0) else $finish;
+        assert(ras_big_inst.need_cnt_sub == 'b0) else $finish;
+        wait_clk();
+        assert(big_ras_bp_addr == 'h80008684) else $finish;
+        assert(big_ras_csrf_ras_full_add == 'b0) else $finish;
+    endtask
+
     initial begin
         clk = 0;
         forever #5 clk = ~clk;
@@ -233,6 +376,7 @@ module top;
         //test_cnt_max();
         test_push_pop();
         test_push_pop_cnt();
+        test_big();
         $display("TEST PASSED");
         $finish;
     end

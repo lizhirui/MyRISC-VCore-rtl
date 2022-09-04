@@ -1,7 +1,7 @@
 `include "config.svh"
 `include "common.svh"
 
-`define assert_equal(_cycle, _expected, _actual) assert((_expected) == (_actual)) else begin $display("cycle = %0d, expected = %0x, actual = %0x", (_cycle), (_expected), (_actual)); $finish; end
+`define assert_equal(_cycle, _expected, _actual) assert((_expected) == (_actual)) else begin $display("cycle = %0d, expected = %0x, actual = %0x", (_cycle), (_expected), (_actual)); #10; $finish; end
 
 module top;
     localparam ITEM_NUM = 8;

@@ -93,7 +93,7 @@ module ras #(
                 if(rst) begin
                     buffer_cnt[i] <= 'b0;
                 end
-                else if((i == (top_ptr - 'b1)) && (need_cnt_add || need_cnt_sub)) begin
+                else if((unsigned'(i) == (top_ptr - 'b1)) && (need_cnt_add || need_cnt_sub)) begin
                     if(need_cnt_add) begin
                         buffer_cnt[i] <= buffer_cnt[i] + 'b1;
                     end
@@ -102,17 +102,17 @@ module ras #(
                     end
                 end
                 else if(need_throw)begin
-                    if(i == ((DEPTH_WIDTH + 1)'(DEPTH) - 1)) begin
+                    if(unsigned'(i) == unsigned'(DEPTH - 1)) begin
                         buffer_cnt[i] <= 'b1;
                     end
-                    else if(unsigned'(i + 1) < DEPTH) begin
+                    else begin
                         buffer_cnt[i] <= buffer_cnt[i + 1];
                     end
                 end
-                else if((i == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
+                else if((unsigned'(i) == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
                     buffer_cnt[i] <= 'b1;
                 end
-                else if((i == (top_ptr - 'b1)) && bp_ras_push && bp_ras_pop && (bp_ras_addr != buffer[i])) begin
+                else if((unsigned'(i) == (top_ptr - 'b1)) && bp_ras_push && bp_ras_pop && (bp_ras_addr != buffer[i])) begin
                     buffer_cnt[i] <= 'b1;
                 end
             end
@@ -126,17 +126,17 @@ module ras #(
                     buffer[i] <= 'b0;
                 end
                 else if(need_throw)begin
-                    if(i == (DEPTH - 1)) begin
+                    if(unsigned'(i) == unsigned'(DEPTH - 1)) begin
                         buffer[i] <= bp_ras_addr;
                     end
                     else begin
                         buffer[i] <= buffer[i + 1];
                     end
                 end
-                else if((i == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
+                else if((unsigned'(i) == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
                     buffer[i] <= bp_ras_addr;
                 end
-                else if((i == (top_ptr - 'b1)) && bp_ras_push && bp_ras_pop && (bp_ras_addr != buffer[i]) && (buffer_cnt[i] == 'b1)) begin
+                else if((unsigned'(i) == (top_ptr - 'b1)) && bp_ras_push && bp_ras_pop && (bp_ras_addr != buffer[i]) && (buffer_cnt[i] == 'b1)) begin
                     buffer[i] <= bp_ras_addr;
                 end
             end

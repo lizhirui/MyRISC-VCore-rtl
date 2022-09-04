@@ -123,9 +123,11 @@ class dynamic_check_thread(threading.Thread):
                 green_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Test Passed " + elapsed_time)
                 passed_cnt += 1
                 print_lock.release()
-            elif "Offending" in ret:
+            elif "Offending" in ret or "assert" in ret:
                 print_lock.acquire()
                 red_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Test Failed " + elapsed_time)
+                print(ret)
+                os._exit(0)
                 failed_cnt += 1
                 print_lock.release()
             else:
@@ -175,6 +177,8 @@ if args.group == "all":
     tb_groups.append("difftest")
 else:
     tb_groups.append(args.group)
+
+print("Start Time: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 print("Start to scan testcases...")
 

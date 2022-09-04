@@ -7,9 +7,9 @@ import tdb_reader::*;
 
 import "DPI-C" function string getenv(input string env_name);
 
-`define assert(condition) assert((condition)) else $finish;
-`define assert_cycle(_cycle, condition) assert((condition)) else begin $display("cycle = %0d", (_cycle)); $finish; end
-`define assert_equal(_cycle, _expected, _actual) assert((_expected) == (_actual)) else begin $display("cycle = %0d, expected = %0x, actual = %0x", (_cycle), (_expected), (_actual)); $finish; end
+`define assert(condition) assert((condition)) else begin #10; $finish; end
+`define assert_cycle(_cycle, condition) assert((condition)) else begin $display("cycle = %0d", (_cycle)); #10; $finish; end
+`define assert_equal(_cycle, _expected, _actual) assert((_expected) == (_actual)) else begin $display("cycle = %0d, expected = %0x, actual = %0x", (_cycle), (_expected), (_actual)); #10; $finish; end
 
 module top;
     tdb_reader tdb;
@@ -211,7 +211,6 @@ module top;
             tdb.move_to_prev_row();
             `assert(tdb.read_cur_row())
             wait_clk();
-            //break;
         end
     endtask
 
