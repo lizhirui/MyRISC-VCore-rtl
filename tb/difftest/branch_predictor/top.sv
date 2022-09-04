@@ -396,12 +396,6 @@ module top;
             if(bp_ras_push) begin
                 `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bp_ras_addr", 0), bp_ras_addr)
             end
-            
-            /*if((branch_predictor_inst.gshare_pht_write_addr == 12'hfd5)) begin
-                $display("cur_cycle = %0d", cur_cycle);
-                $display("gshare_pht_write_data = %0x", branch_predictor_inst.gshare_pht_write_data);
-                $display("we = %0d", branch_predictor_inst.gshare_pht_we);
-            end*/
 
             wait_clk();
         end

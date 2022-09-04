@@ -159,7 +159,7 @@ module top;
         assert(ras_bp_addr == 'b1) else $finish;
         assert(ras_csrf_ras_full_add == 'b0) else $finish;
 
-        for(i = 0;i < 10;i++) begin
+        for(i = 0;i < 32'hFFFFFFFF;i++) begin
             bp_ras_addr = 'b11;
             wait_clk();
             assert(ras_bp_addr == 'b11) else $finish;
@@ -373,7 +373,7 @@ module top;
     initial begin
         test();
         test_cnt();
-        //test_cnt_max();
+        test_cnt_max();
         test_push_pop();
         test_push_pop_cnt();
         test_big();
