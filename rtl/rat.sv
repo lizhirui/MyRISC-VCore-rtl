@@ -22,11 +22,11 @@ module rat(
         input logic[`PHY_REG_NUM - 1:0] commit_rat_map_table_visible,
         input logic commit_rat_map_table_restore,
         
-        input logic[`PHY_REG_NUM - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1],
+        input logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1],
         input logic[`COMMIT_WIDTH - 1:0] commit_rat_release_phy_id_valid,
         input logic commit_rat_release_map,
         
-        input logic[`PHY_REG_NUM - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1],
+        input logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1],
         input logic[`COMMIT_WIDTH - 1:0] commit_rat_commit_phy_id_valid,
         input logic commit_rat_commit_map,
         
@@ -43,6 +43,10 @@ module rat(
 
     logic[`PHY_REG_ID_WIDTH - 1:0] new_phy_id_temp[0:`PHY_REG_NUM - 1][0:`RENAME_WIDTH - 1];
     logic[$clog2(`RENAME_WIDTH):0] new_phy_id_cnt_temp[0:`PHY_REG_NUM - 1];
+
+    logic[`RENAME_WIDTH - 1:0] visible_channel_disable_cmp[0:`RENAME_WIDTH - 1];
+    logic[`RENAME_WIDTH - 1:0] visible_enable_cmp[0:`PHY_REG_NUM - 1];
+    logic[`PHY_REG_NUM - 1:0] visible_enable;
 
     logic[`RENAME_WIDTH - 1:0] new_arch_id_cmp[0:`PHY_REG_NUM - 1];
     logic[$clog2(`RENAME_WIDTH) - 1:0] new_arch_id_channel_index[0:`PHY_REG_NUM - 1];
@@ -72,7 +76,7 @@ module rat(
         for(j = 0;j < `RENAME_WIDTH;j++) begin
             assign new_phy_id_temp[0][j] = 'b0;
         end
-
+        
         assign new_phy_id_cnt_temp[0] = map_valid[0] ? 'b0 : 'b1;
 
         for(i = 1;i < `PHY_REG_NUM;i = i + 1) begin
@@ -101,7 +105,7 @@ module rat(
     generate
         for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin: new_arch_id_generate
             for(j = 0;j < `RENAME_WIDTH;j = j + 1) begin
-                assign new_arch_id_cmp[i][j] = (rename_rat_phy_id[j] == i) && rename_rat_phy_id_valid[j];
+                assign new_arch_id_cmp[i][j] = (rename_rat_phy_id[j] == unsigned'(i)) && rename_rat_phy_id_valid[j];
             end
 
             parallel_finder #(
@@ -113,6 +117,35 @@ module rat(
             );
 
             assign new_arch_id[i] = rename_rat_arch_id[new_arch_id_channel_index[i]];
+        end
+    endgenerate
+
+    //get visible enable signal
+    generate
+        assign visible_channel_disable_cmp[`RENAME_WIDTH - 1] = 'b0;
+
+        for(i = 0;i < `RENAME_WIDTH - 1;i++) begin
+            for(j = 0;j < `RENAME_WIDTH;j++) begin
+                if(j <= i) begin
+                    assign visible_channel_disable_cmp[i][j] = 'b0;
+                end
+                else begin
+                    assign visible_channel_disable_cmp[i][j] = (rename_rat_arch_id[i] == rename_rat_arch_id[j]) && rename_rat_phy_id_valid[j];
+                end
+            end
+        end
+
+        for(i = 0;i < `PHY_REG_NUM;i++) begin
+            for(j = 0;j < `RENAME_WIDTH;j++) begin
+                assign visible_enable_cmp[i][j] = (rename_rat_phy_id[j] == unsigned'(i)) && rename_rat_phy_id_valid[j] && !(|visible_channel_disable_cmp[j]);
+            end
+
+            parallel_finder #(
+                .WIDTH(`RENAME_WIDTH)
+            )parallel_finder_visible_enable_inst(
+                .data_in(visible_enable_cmp[i]),
+                .index_valid(visible_enable[i])
+            );
         end
     endgenerate
 
@@ -219,7 +252,7 @@ module rat(
                 else if(hide_phy_id[i] && rename_rat_map) begin //hide a old map
                     map_visible[i] <= 'b0;
                 end
-                else if(new_arch_id_valid[i] && rename_rat_map) begin //create a new map
+                else if(visible_enable[i] && rename_rat_map) begin //create a new map
                     map_visible[i] <= 'b1;
                 end
             end

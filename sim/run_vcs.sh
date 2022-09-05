@@ -4,7 +4,7 @@ setenv SIM_ROOT_DIR `pwd`/..
 
 setenv SIM_SCRIPT_DIR `pwd`
 
-if ($1 == "basic") then
+if ($1 == "basic" || $1 == "test") then
     set module = $2
 else if ($1 == "difftest") then
     setenv SIM_TRACE_NAME $2
