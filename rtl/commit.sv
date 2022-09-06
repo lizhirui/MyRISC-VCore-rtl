@@ -130,6 +130,8 @@ module commit(
 
     logic[`COMMIT_WIDTH - 1:0] bru_op_is_hit;
 
+    logic[`COMMIT_WIDTH - 1:0] rob_item_is_finish;
+
     logic[$clog2(`COMMIT_WIDTH):0] normal_csrf_commit_num_add;
 
     logic[`CSR_ADDR_WIDTH - 1:0] normal_csrf_write_addr[0:`COMMIT_CSR_CHANNEL_NUM - 1];
@@ -423,9 +425,15 @@ module commit(
 
     assign commit_rob_next_id = rob_commit_retire_head_id + normal_csrf_commit_num_add;
 
+    generate
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
+            assign rob_item_is_finish[i] = rob_commit_retire_data[i].finish && rob_commit_retire_id_valid[i];
+        end
+    endgenerate
+
     assign normal_feedback_pack.enable = !rob_commit_empty;
-    assign normal_feedback_pack.next_handle_rob_id_valid = (next_state != STATE_INTERRUPT_FLUSH) && rob_commit_next_id_valid;
-    assign normal_feedback_pack.next_handle_rob_id = commit_rob_next_id;
+    assign normal_feedback_pack.next_handle_rob_id_valid = (cur_state == STATE_NORMAL) && (rob_commit_next_id_valid || (!(|rob_item_is_finish) && !rob_commit_empty));
+    assign normal_feedback_pack.next_handle_rob_id = (|rob_item_is_finish) ? commit_rob_next_id : rob_commit_retire_head_id;
     assign normal_feedback_pack.has_exception = 'b0;
     assign normal_feedback_pack.exception_pc = 'b0;
     assign normal_feedback_pack.flush = intif_commit_has_interrupt || retire_has_exception || retire_is_miss;

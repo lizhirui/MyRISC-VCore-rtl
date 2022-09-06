@@ -478,7 +478,9 @@ module top;
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_csrf_commit_num_add", 0), commit_csrf_commit_num_add)
             
             if(commit_inst.cur_state == STATE_NORMAL) begin
-                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_rob_next_id", 0), commit_rob_next_id)
+                if(tdb.get_uint8(DOMAIN_OUTPUT, "commit_rob_next_id", 0) == tdb.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.next_handle_rob_id", 0)) begin
+                    `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_rob_next_id", 0), commit_rob_next_id)
+                end
             end
             else begin
                 `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_rob_flush_id", 0), commit_rob_flush_id)

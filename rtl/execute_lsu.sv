@@ -30,21 +30,24 @@ module execute_lsu(
 
     logic is_load;
     logic busy;
+    logic inst_valid;
     issue_execute_pack_t rev_pack;
     execute_wb_pack_t send_pack;
 
-    assign lsu_wb_port_flush = busy || !issue_lsu_fifo_data_out_valid || (is_load && !rev_pack.has_exception && !stbuf_exlsu_bus_ready) || (commit_feedback_pack.enable && commit_feedback_pack.flush);
+    assign inst_valid = issue_lsu_fifo_data_out_valid && rev_pack.enable && rev_pack.valid;
+
+    assign lsu_wb_port_flush = busy || !issue_lsu_fifo_data_out_valid || (inst_valid && is_load && !rev_pack.has_exception && !stbuf_exlsu_bus_ready) || (commit_feedback_pack.enable && commit_feedback_pack.flush);
     assign lsu_wb_port_we = !lsu_wb_port_flush;
     assign issue_lsu_fifo_pop = lsu_wb_port_we;
 
     assign rev_pack = issue_lsu_fifo_data_out;
     assign lsu_wb_port_data_in = send_pack;
 
-    assign exlsu_stbuf_push = !is_load && lsu_wb_port_we;
+    assign exlsu_stbuf_push = !is_load && lsu_wb_port_we && inst_valid && !rev_pack.has_exception;
 
-    assign busy = issue_lsu_fifo_data_out_valid && !is_load && stbuf_exlsu_full;
+    assign busy = inst_valid && !is_load && stbuf_exlsu_full && !(commit_feedback_pack.enable && commit_feedback_pack.flush);
 
-    assign lsu_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && lsu_wb_port_we;
+    assign lsu_execute_channel_feedback_pack.enable = inst_valid && send_pack.rd_enable && send_pack.need_rename && lsu_wb_port_we;
     assign lsu_execute_channel_feedback_pack.phy_id = send_pack.rd_phy;
     assign lsu_execute_channel_feedback_pack.value = send_pack.rd_value;
 

@@ -126,8 +126,8 @@ class dynamic_check_thread(threading.Thread):
             elif "Offending" in ret or "assert" in ret:
                 print_lock.acquire()
                 red_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Test Failed " + elapsed_time)
-                print(ret)
-                os._exit(0)
+                #print(ret)
+                #os._exit(0)
                 failed_cnt += 1
                 print_lock.release()
             else:

@@ -117,7 +117,6 @@ module top;
         cur_cycle = tdb.get_cur_row();
 
         while(1) begin
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_STATUS, "busy", 0), execute_lsu_inst.busy)
             tdb.move_to_next_row();
             cur_cycle = tdb.get_cur_row();
 
@@ -260,6 +259,7 @@ module top;
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "lsu_execute_channel_feedback_pack.enable", 0), lsu_execute_channel_feedback_pack.enable)
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "lsu_execute_channel_feedback_pack.phy_id", 0), lsu_execute_channel_feedback_pack.phy_id)
             `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "lsu_execute_channel_feedback_pack.value", 0), lsu_execute_channel_feedback_pack.value)
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_STATUS, "busy", 0), execute_lsu_inst.busy)
             wait_clk();
         end
     endtask
