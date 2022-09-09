@@ -54,11 +54,11 @@ module phy_regfile(
     generate
         for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin: write_signal_generate
             for(j = 0;j < `WB_WIDTH;j = j + 1) begin
-                assign wb_phyf_id_cmp[i][j] = i == wb_phyf_id[j];
+                assign wb_phyf_id_cmp[i][j] = (unsigned'(i) == wb_phyf_id[j]) && wb_phyf_we[j];
             end
 
             for(j = 0;j < `COMMIT_WIDTH;j = j + 1) begin
-                assign commit_phyf_id_cmp[i][j] = i == commit_phyf_id[j];
+                assign commit_phyf_id_cmp[i][j] = (unsigned'(i) == commit_phyf_id[j]) && commit_phyf_invalid[j];
             end
 
             data_selector #(
@@ -86,19 +86,15 @@ module phy_regfile(
                 else if(commit_phyf_data_valid_restore) begin
                     data_valid[i] <= commit_phyf_data_valid[i];
                 end
-                else if(wb_phyf_we) begin
-                    if(wb_phyf_id_cmp_data_out_valid[i]) begin
-                        data_valid[i] <= 'b1;
-                        data[i] <= wb_phyf_id_cmp_data_out[i];
-                    end
+                else if(wb_phyf_id_cmp_data_out_valid[i]) begin
+                    data_valid[i] <= 'b1;
+                    data[i] <= wb_phyf_id_cmp_data_out[i];
                 end
-                else if(commit_phyf_invalid) begin
-                    if(commit_phyf_id_cmp_data_out_valid[i]) begin
-                        data_valid[i] <= 'b0;
-                    end
+                else if(commit_phyf_id_cmp_data_out_valid[i]) begin
+                    data_valid[i] <= 'b0;
                 end
                 else if(commit_phyf_flush_invalid) begin
-                    if(i == commit_phyf_flush_id) begin
+                    if(unsigned'(i) == commit_phyf_flush_id) begin
                         data_valid[i] <= 'b0;
                     end
                 end

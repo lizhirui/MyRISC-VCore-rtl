@@ -32,6 +32,7 @@ xcelium.d/
 .simvision/
 indago_logs/
 .vscode/
+.ccls-cache/
 rtl/spyglass/
 rtl/work/
 fpga/

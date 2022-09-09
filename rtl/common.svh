@@ -697,8 +697,6 @@
     `define max(a, b) (((a) > (b)) ? (a) : (b))
     `define min(a, b) (((a) < (b)) ? (a) : (b))
 
-    `define size_field_to_size(x) (unsigned'(unsigned'(2)**(unsigned'(x))))
-
     `define ptr_in_range(x, rptr, wptr, width) ((rptr[(width) - 1:0] < wptr[(width) - 1:0]) ? (((x) >= rptr[(width) - 1:0]) && ((x) < wptr[(width) - 1:0])) : ((((x) >= rptr[(width) - 1:0]) || ((x) < wptr[(width) - 1:0])) && (rptr != wptr)))
 
     `define MIP_SSIP 1

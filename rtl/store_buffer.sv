@@ -48,8 +48,8 @@ module store_buffer(
     logic empty;
 
     logic flush;
-    logic[DEPTH_WIDTH - 1:0] flush_next_wptr;
-    logic[DEPTH - 1:0] flush_cur_ptr;
+    logic[DEPTH_WIDTH:0] flush_next_wptr;
+    logic[DEPTH_WIDTH - 1:0] flush_cur_ptr[0:DEPTH - 1];
     logic[DEPTH - 1:0] flush_commit_cmp;
     logic[DEPTH_WIDTH - 1:0] flush_commit_index;
     logic flush_commit_index_valid;
@@ -89,14 +89,13 @@ module store_buffer(
             issue_stbuf_read_size_r <= 'b0;
         end
         else begin
-            if(bus_stbuf_read_ack) begin
-                issue_stbuf_read_reg_lock <= 'b0;
-            end
-
-            if(issue_stbuf_rd && (!issue_stbuf_read_reg_lock | bus_stbuf_write_ack)) begin
+            if(issue_stbuf_rd && (!issue_stbuf_read_reg_lock | bus_stbuf_read_ack)) begin
                 issue_stbuf_read_addr_r <= issue_stbuf_read_addr;
                 issue_stbuf_read_size_r <= issue_stbuf_read_size;
                 issue_stbuf_read_reg_lock <= 'b1;
+            end
+            else if(bus_stbuf_read_ack) begin
+                issue_stbuf_read_reg_lock <= 'b0;
             end
         end
     end
@@ -119,7 +118,7 @@ module store_buffer(
         end
     end
 
-    assign rptr_next = empty ? rptr : bus_stbuf_write_ack ? (rptr + 'b1)  : rptr;
+    assign rptr_next = empty ? rptr : stbuf_bus_write_req ? (rptr + 'b1)  : rptr;
     assign wptr_next = flush ? flush_next_wptr : full ? wptr : exlsu_stbuf_push ? (wptr + 'b1) : wptr;
 
     generate 
@@ -165,15 +164,15 @@ module store_buffer(
                 feedback_bit_length[i] = 'b0;
                 feedback_data[i] = feedback_input_data[i];
 
-                if((feedback_cur_id[i] >= rptr[DEPTH_WIDTH - 1:0]) && (feedback_cur_id[i] < wptr[DEPTH_WIDTH - 1:0])) begin
-                    if((feedback_cur_item[i].addr >= issue_stbuf_read_addr_r) && (feedback_cur_item[i].addr < (issue_stbuf_read_addr_r + `size_field_to_size(issue_stbuf_read_size_r)))) begin
+                if(`ptr_in_range(feedback_cur_id[i], rptr, wptr, DEPTH_WIDTH)) begin
+                    if((feedback_cur_item[i].addr >= issue_stbuf_read_addr_r) && (feedback_cur_item[i].addr < (issue_stbuf_read_addr_r + issue_stbuf_read_size_r))) begin
                         feedback_bit_offset[i] = {feedback_cur_item[i].addr - issue_stbuf_read_addr_r, 3'b0};
-                        feedback_bit_length[i] = {`min(`size_field_to_size(feedback_cur_item[i].size), issue_stbuf_read_addr_r + `size_field_to_size(issue_stbuf_read_size_r) - feedback_cur_item[i].addr), 3'b0};
+                        feedback_bit_length[i] = {`min(feedback_cur_item[i].size, issue_stbuf_read_addr_r + issue_stbuf_read_size_r - feedback_cur_item[i].addr), 3'b0};
                         feedback_data[i] = (feedback_input_data[i] & (~(feedback_bit_mask[i] << feedback_bit_offset[i]))) | ((`BUS_DATA_WIDTH'(feedback_cur_item[i].data) & feedback_bit_mask[i]) << feedback_bit_offset[i]);
                     end
-                    else if((feedback_cur_item[i].addr < issue_stbuf_read_addr_r) && ((feedback_cur_item[i].addr + `size_field_to_size(feedback_cur_item[i].size)) > issue_stbuf_read_addr_r)) begin
+                    else if((feedback_cur_item[i].addr < issue_stbuf_read_addr_r) && ((feedback_cur_item[i].addr + feedback_cur_item[i].size) > issue_stbuf_read_addr_r)) begin
                         feedback_bit_offset[i] = {issue_stbuf_read_addr_r - feedback_cur_item[i].addr, 3'b0};
-                        feedback_bit_length[i] = {`min(`size_field_to_size(issue_stbuf_read_size_r), feedback_cur_item[i].addr + `size_field_to_size(feedback_cur_item[i].size) - issue_stbuf_read_addr_r), 3'b0};
+                        feedback_bit_length[i] = {`min(issue_stbuf_read_size_r, feedback_cur_item[i].addr + feedback_cur_item[i].size - issue_stbuf_read_addr_r), 3'b0};
                         feedback_data[i] = (feedback_input_data[i] & (~feedback_bit_mask[i])) | ((feedback_cur_item[i].data >> feedback_bit_offset[i]) & feedback_bit_mask[i]);
                     end
                 end
@@ -205,10 +204,9 @@ module store_buffer(
                                                    (commit_feedback_pack.committed_rob_id[j] == buffer[i].rob_id);
             end
 
-            priority_finder #(
-                .FIRST_PRIORITY(1),
+            parallel_finder #(
                 .WIDTH(`COMMIT_WIDTH)
-            )priority_finder_ready_to_commit_inst(
+            )parallel_finder_ready_to_commit_inst(
                 .data_in(ready_to_commit_cmp[i]),
                 .index_valid(ready_to_commit[i])
             );

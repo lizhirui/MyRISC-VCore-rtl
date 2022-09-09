@@ -101,11 +101,11 @@ module top;
         wait_clk();
         exlsu_stbuf_rob_id = 'd5;
         exlsu_stbuf_write_addr = 'b0;
-        exlsu_stbuf_write_size = 'b10;
+        exlsu_stbuf_write_size = 'h4;
         exlsu_stbuf_write_data = 'haabbccdd;
         exlsu_stbuf_push = 'b1;
         issue_stbuf_read_addr = 'b0;
-        issue_stbuf_read_size = 'b10;
+        issue_stbuf_read_size = 'h4;
         wait_clk();
         assert(stbuf_exlsu_bus_data == bus_stbuf_data) else $finish;
         assert(stbuf_exlsu_bus_data_feedback == exlsu_stbuf_write_data) else $finish;
@@ -126,7 +126,7 @@ module top;
         rst = 1;
         wait_clk();
         rst = 0;
-        exlsu_stbuf_write_size = 'b01;
+        exlsu_stbuf_write_size = 'h2;
         issue_stbuf_read_addr = 'b0;
         wait_clk();
         assert(stbuf_exlsu_bus_data_feedback == 'hdeadccdd) else $finish;
@@ -140,15 +140,15 @@ module top;
         wait_clk();
         rst = 0;
         exlsu_stbuf_write_addr = 'b0;
-        exlsu_stbuf_write_size = 'b01;
+        exlsu_stbuf_write_size = 'h2;
         exlsu_stbuf_write_data = 'hffee;
         wait_clk();
         exlsu_stbuf_write_addr = 'h3;
-        exlsu_stbuf_write_size = 'b00;
+        exlsu_stbuf_write_size = 'h1;
         exlsu_stbuf_write_data = 'h3f;
         wait_clk();
         exlsu_stbuf_write_addr = 'h4;
-        exlsu_stbuf_write_size = 'b10;
+        exlsu_stbuf_write_size = 'h4;
         exlsu_stbuf_write_data = 'hddccbbaa;
         issue_stbuf_read_addr = 'h1;
         wait_clk();
@@ -174,7 +174,7 @@ module top;
         for(i = 0;i < `STORE_BUFFER_SIZE;i++) begin
             exlsu_stbuf_rob_id = unsigned'(i);
             exlsu_stbuf_write_addr = unsigned'(i);
-            exlsu_stbuf_write_size = 'b10;
+            exlsu_stbuf_write_size = 'h4;
             exlsu_stbuf_write_data = 'h1581abcf + unsigned'(i);
             wait_clk();
             assert(stbuf_all_empty == 'b0) else $finish;
@@ -193,21 +193,15 @@ module top;
 
             bus_stbuf_write_ack = 'b0;
             wait_clk();
+            bus_stbuf_write_ack = 'b1;
+            eval();
 
             for(j = 0;j < `COMMIT_WIDTH;j++) begin
-                assert(stbuf_all_empty == 'b0) else $finish;
                 assert(stbuf_bus_write_addr == unsigned'(i * `COMMIT_WIDTH + j)) else $finish;
-                assert(stbuf_bus_write_size == 'b10) else $finish;
+                assert(stbuf_bus_write_size == 'h4) else $finish;
                 assert(stbuf_bus_data == 'h1581abcf + unsigned'(i * `COMMIT_WIDTH + j)) else $finish;
-                assert(stbuf_bus_write_req == 'b1) else $finish;
+                assert(stbuf_bus_write_req == 'b1) else $finish;               
                 wait_clk();
-                assert(stbuf_bus_write_addr == unsigned'(i * `COMMIT_WIDTH + j)) else $finish;
-                assert(stbuf_bus_write_size == 'b10) else $finish;
-                assert(stbuf_bus_data == 'h1581abcf + unsigned'(i * `COMMIT_WIDTH + j)) else $finish;
-                assert(stbuf_bus_write_req == 'b1) else $finish;
-                bus_stbuf_write_ack = 'b1;
-                wait_clk();
-                bus_stbuf_write_ack = 'b0;
             end
         end
 
