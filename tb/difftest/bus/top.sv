@@ -154,20 +154,20 @@ module top;
                 `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_tcm_fetch_rd_cur", 0), bus_tcm_fetch_rd)
                 
                 if(bus_tcm_fetch_rd) begin
-                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_tcm_fetch_addr_cur", 0), bus_tcm_fetch_addr + `TCM_ADDR)
+                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_tcm_fetch_addr_cur", 0), bus_tcm_fetch_addr)
                 end
 
                 `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_rd_cur", 0), bus_tcm_stbuf_rd)
 
                 if(bus_tcm_stbuf_rd) begin
-                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_read_addr_cur", 0), bus_tcm_stbuf_read_addr + `TCM_ADDR)
+                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_read_addr_cur", 0), bus_tcm_stbuf_read_addr)
                     `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_read_size_cur", 0), bus_tcm_stbuf_read_size)
                 end
                 
                 `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_clint_rd_cur", 0), bus_clint_rd)
 
                 if(bus_clint_rd) begin
-                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_clint_read_addr_cur", 0), bus_clint_read_addr + `TCM_ADDR)
+                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_clint_read_addr_cur", 0), bus_clint_read_addr)
                     `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_clint_read_size_cur", 0), bus_clint_read_size)
                 end
             end
@@ -178,7 +178,7 @@ module top;
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_wr", 0), bus_tcm_stbuf_wr)
 
             if(bus_tcm_stbuf_wr) begin
-                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_write_addr", 0), bus_tcm_stbuf_write_addr + `TCM_ADDR)
+                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_write_addr", 0), bus_tcm_stbuf_write_addr)
                 `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_write_size", 0), bus_tcm_stbuf_write_size)
                 `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_data", 0), bus_tcm_stbuf_data)
             end    
@@ -186,7 +186,7 @@ module top;
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_clint_wr", 0), bus_clint_wr)
 
             if(bus_clint_wr) begin
-                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_clint_write_addr", 0), bus_clint_write_addr + `TCM_ADDR)
+                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_clint_write_addr", 0), bus_clint_write_addr)
                 `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "bus_clint_write_size", 0), bus_clint_write_size)
                 `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_clint_data", 0), bus_clint_data)
             end

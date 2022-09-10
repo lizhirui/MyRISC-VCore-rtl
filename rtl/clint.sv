@@ -64,15 +64,20 @@ module clint(
         end
     end
 
-    always_comb begin
-        case(bus_clint_read_addr)
-            MSIP_ADDR: clint_bus_data = msip;
-            MTIMECMP_ADDR: clint_bus_data = mtimecmp[`REG_DATA_WIDTH - 1:0];
-            (MTIMECMP_ADDR + 'h4): clint_bus_data = mtimecmp[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
-            MTIME_ADDR: clint_bus_data = mtime[`REG_DATA_WIDTH - 1:0];
-            (MTIME_ADDR + 'h4): clint_bus_data = mtime[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
-            default: clint_bus_data = 'b0;
-        endcase
+    always_ff @(posedge clk) begin
+        if(rst) begin
+            clint_bus_data <= 'b0;
+        end
+        else if(bus_clint_rd) begin
+            case(bus_clint_read_addr)
+                MSIP_ADDR: clint_bus_data <= msip;
+                MTIMECMP_ADDR: clint_bus_data <= mtimecmp[`REG_DATA_WIDTH - 1:0];
+                (MTIMECMP_ADDR + 'h4): clint_bus_data <= mtimecmp[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
+                MTIME_ADDR: clint_bus_data <= mtime[`REG_DATA_WIDTH - 1:0];
+                (MTIME_ADDR + 'h4): clint_bus_data <= mtime[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
+                default: clint_bus_data = 'b0;
+            endcase
+        end
     end
 
     assign all_intif_int_timer_req = mtime >= mtimecmp;

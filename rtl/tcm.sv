@@ -1,7 +1,10 @@
 `include "config.svh"
 `include "common.svh"
 
-module tcm(
+module tcm #(
+        parameter IMAGE_PATH = "D:\\program\\project\\MyRISC-VCore\\image\\coremark_10\\",
+        parameter IMAGE_INIT = 1
+    )(
         input logic clk,
         input logic rst,
 
@@ -55,6 +58,45 @@ module tcm(
     logic[7:0] stbuf_bank_write_data[0:BANK_NUM - 1];
 
     genvar i, j;
+
+    generate
+        if(IMAGE_INIT) begin
+            initial begin
+                $readmemh({IMAGE_PATH, "0.bank"}, fetch_mem[0]);
+                $readmemh({IMAGE_PATH, "1.bank"}, fetch_mem[1]);
+                $readmemh({IMAGE_PATH, "2.bank"}, fetch_mem[2]);
+                $readmemh({IMAGE_PATH, "3.bank"}, fetch_mem[3]);
+                $readmemh({IMAGE_PATH, "4.bank"}, fetch_mem[4]);
+                $readmemh({IMAGE_PATH, "5.bank"}, fetch_mem[5]);
+                $readmemh({IMAGE_PATH, "6.bank"}, fetch_mem[6]);
+                $readmemh({IMAGE_PATH, "7.bank"}, fetch_mem[7]);
+                $readmemh({IMAGE_PATH, "8.bank"}, fetch_mem[8]);
+                $readmemh({IMAGE_PATH, "9.bank"}, fetch_mem[9]);
+                $readmemh({IMAGE_PATH, "10.bank"}, fetch_mem[10]);
+                $readmemh({IMAGE_PATH, "11.bank"}, fetch_mem[11]);
+                $readmemh({IMAGE_PATH, "12.bank"}, fetch_mem[12]);
+                $readmemh({IMAGE_PATH, "13.bank"}, fetch_mem[13]);
+                $readmemh({IMAGE_PATH, "14.bank"}, fetch_mem[14]);
+                $readmemh({IMAGE_PATH, "15.bank"}, fetch_mem[15]);
+                $readmemh({IMAGE_PATH, "0.bank"}, stbuf_mem[0]);
+                $readmemh({IMAGE_PATH, "1.bank"}, stbuf_mem[1]);
+                $readmemh({IMAGE_PATH, "2.bank"}, stbuf_mem[2]);
+                $readmemh({IMAGE_PATH, "3.bank"}, stbuf_mem[3]);
+                $readmemh({IMAGE_PATH, "4.bank"}, stbuf_mem[4]);
+                $readmemh({IMAGE_PATH, "5.bank"}, stbuf_mem[5]);
+                $readmemh({IMAGE_PATH, "6.bank"}, stbuf_mem[6]);
+                $readmemh({IMAGE_PATH, "7.bank"}, stbuf_mem[7]);
+                $readmemh({IMAGE_PATH, "8.bank"}, stbuf_mem[8]);
+                $readmemh({IMAGE_PATH, "9.bank"}, stbuf_mem[9]);
+                $readmemh({IMAGE_PATH, "10.bank"}, stbuf_mem[10]);
+                $readmemh({IMAGE_PATH, "11.bank"}, stbuf_mem[11]);
+                $readmemh({IMAGE_PATH, "12.bank"}, stbuf_mem[12]);
+                $readmemh({IMAGE_PATH, "13.bank"}, stbuf_mem[13]);
+                $readmemh({IMAGE_PATH, "14.bank"}, stbuf_mem[14]);
+                $readmemh({IMAGE_PATH, "15.bank"}, stbuf_mem[15]);
+            end
+        end
+    endgenerate
 
     generate
         for(i = 0;i < BANK_NUM;i = i + 1) begin
