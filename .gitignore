@@ -39,5 +39,6 @@ fpga/
 syn/
 syn_simple/
 trace/
+image/
 mount.sh
 umount.sh
