@@ -80,8 +80,8 @@ module top;
         cur_cycle = tdb.get_cur_row();
 
         while(1) begin
-            `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_STATUS, "rptr", 0), checkpoint_buffer_inst.rptr);
-            `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_STATUS, "wptr", 0), checkpoint_buffer_inst.wptr);
+            `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_STATUS, "rptr", 0), checkpoint_buffer_inst.rptr)
+            `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_STATUS, "wptr", 0), checkpoint_buffer_inst.wptr)
             tdb.move_to_next_row();
             cur_cycle = tdb.get_cur_row();
 
@@ -112,32 +112,32 @@ module top;
             commit_cpbuf_flush = tdb.get_uint8(DOMAIN_INPUT, "commit_cpbuf_flush", 0);
             eval();
 
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "cpbuf_fetch_new_id_valid", 0), cpbuf_fetch_new_id_valid);
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "cpbuf_fetch_new_id_valid", 0), cpbuf_fetch_new_id_valid)
 
             if(cpbuf_fetch_new_id_valid) begin
-                `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_fetch_new_id", 0), cpbuf_fetch_new_id);
+                `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_fetch_new_id", 0), cpbuf_fetch_new_id)
             end
 
             for(i = 0;i < `RENAME_WIDTH;i++) begin
                 if(tdb.get_uint16(DOMAIN_INPUT, "rename_cpbuf_id", i) != 65535) begin
-                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_rename_data.global_history", i), cpbuf_rename_data[i].global_history);
-                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_rename_data.local_history", i), cpbuf_rename_data[i].local_history);
+                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_rename_data.global_history", i), cpbuf_rename_data[i].global_history)
+                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_rename_data.local_history", i), cpbuf_rename_data[i].local_history)
                 end
             end
 
             if(tdb.get_uint16(DOMAIN_INPUT, "exbru_cpbuf_id", 0) != 65535) begin
-                `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_exbru_data.rat_phy_map_table_valid", 0), cpbuf_exbru_data.rat_phy_map_table_valid);
-                `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_exbru_data.rat_phy_map_table_visible", 0), cpbuf_exbru_data.rat_phy_map_table_visible);
-                `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_exbru_data.global_history", 0), cpbuf_exbru_data.global_history);
-                `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_exbru_data.local_history", 0), cpbuf_exbru_data.local_history);
+                `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_exbru_data.rat_phy_map_table_valid", 0), cpbuf_exbru_data.rat_phy_map_table_valid)
+                `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_exbru_data.rat_phy_map_table_visible", 0), cpbuf_exbru_data.rat_phy_map_table_visible)
+                `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_exbru_data.global_history", 0), cpbuf_exbru_data.global_history)
+                `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_exbru_data.local_history", 0), cpbuf_exbru_data.local_history)
             end
 
             for(i = 0;i < `COMMIT_WIDTH;i++) begin
                 if(tdb.get_uint16(DOMAIN_INPUT, "commit_cpbuf_id", i) != 65535) begin
-                    `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_commit_data.rat_phy_map_table_valid", i), cpbuf_commit_data[i].rat_phy_map_table_valid);
-                    `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_commit_data.rat_phy_map_table_visible", i), cpbuf_commit_data[i].rat_phy_map_table_visible);
-                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_commit_data.global_history", i), cpbuf_commit_data[i].global_history);
-                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_commit_data.local_history", i), cpbuf_commit_data[i].local_history);
+                    `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_commit_data.rat_phy_map_table_valid", i), cpbuf_commit_data[i].rat_phy_map_table_valid)
+                    `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "cpbuf_commit_data.rat_phy_map_table_visible", i), cpbuf_commit_data[i].rat_phy_map_table_visible)
+                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_commit_data.global_history", i), cpbuf_commit_data[i].global_history)
+                    `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "cpbuf_commit_data.local_history", i), cpbuf_commit_data[i].local_history)
                 end
             end
             

@@ -38,7 +38,7 @@ module readreg(
     assign readreg_issue_port_data_in = send_pack;
 
     generate
-        for(i = 0;i < `READREG_WIDTH;i = i + 1) begin: readreg_generate_i
+        for(i = 0;i < `READREG_WIDTH;i++) begin: readreg_generate_i
             assign send_pack.op_info[i].enable = rev_pack.op_info[i].enable;
             assign send_pack.op_info[i].value = rev_pack.op_info[i].value;
             assign send_pack.op_info[i].valid = rev_pack.op_info[i].valid;
@@ -78,8 +78,8 @@ module readreg(
             assign readreg_phyf_id[i][0] = rev_pack.op_info[i].rs1_phy;
             assign readreg_phyf_id[i][1] = rev_pack.op_info[i].rs2_phy;
 
-            for(j = 0;j < 2;j = j + 1) begin: readreg_generate_j
-                for(k = 0;k < `EXECUTE_UNIT_NUM;k = k + 1) begin: readreg_generate_k
+            for(j = 0;j < 2;j++) begin: readreg_generate_j
+                for(k = 0;k < `EXECUTE_UNIT_NUM;k++) begin: readreg_generate_k
                     assign feedback_data_cmp[i][j][k] = (execute_feedback_pack.channel[k].enable && (readreg_phyf_id[i][j] == execute_feedback_pack.channel[k].phy_id));
                     assign feedback_data_temp[i][j][k] = execute_feedback_pack.channel[k].value;
                     assign feedback_data_cmp[i][j][`EXECUTE_UNIT_NUM + k] = (wb_feedback_pack.channel[k].enable && (readreg_phyf_id[i][j] == wb_feedback_pack.channel[k].phy_id));

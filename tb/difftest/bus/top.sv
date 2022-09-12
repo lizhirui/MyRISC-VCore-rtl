@@ -122,7 +122,7 @@ module top;
 
             if(bus_fetch_read_ack) begin
                 for(i = 0;i < `FETCH_WIDTH;i++) begin
-                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_fetch_data", i), bus_fetch_data[i * `INSTRUCTION_WIDTH+:`INSTRUCTION_WIDTH]);
+                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "bus_fetch_data", i), bus_fetch_data[i * `INSTRUCTION_WIDTH+:`INSTRUCTION_WIDTH])
                 end
             end
 

@@ -29,27 +29,27 @@ module wb(
     genvar i;
 
     generate
-        for(i = 0;i < `ALU_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `ALU_UNIT_NUM;i++) begin
             assign execute_wb_port[i] = alu_wb_port_data_out[i];
         end
 
-        for(i = 0;i < `BRU_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `BRU_UNIT_NUM;i++) begin
             assign execute_wb_port[`ALU_UNIT_NUM + i] = bru_wb_port_data_out[i];
         end
 
-        for(i = 0;i < `CSR_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `CSR_UNIT_NUM;i++) begin
             assign execute_wb_port[`ALU_UNIT_NUM + `BRU_UNIT_NUM + i] = csr_wb_port_data_out[i];
         end
 
-        for(i = 0;i < `DIV_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `DIV_UNIT_NUM;i++) begin
             assign execute_wb_port[`ALU_UNIT_NUM + `BRU_UNIT_NUM + `CSR_UNIT_NUM + i] = div_wb_port_data_out[i];
         end
 
-        for(i = 0;i < `LSU_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `LSU_UNIT_NUM;i++) begin
             assign execute_wb_port[`ALU_UNIT_NUM + `BRU_UNIT_NUM + `CSR_UNIT_NUM + `DIV_UNIT_NUM + i] = lsu_wb_port_data_out[i];
         end
 
-        for(i = 0;i < `MUL_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `MUL_UNIT_NUM;i++) begin
             assign execute_wb_port[`ALU_UNIT_NUM + `BRU_UNIT_NUM + `CSR_UNIT_NUM + `DIV_UNIT_NUM + `LSU_UNIT_NUM + i] = mul_wb_port_data_out[i];
         end
     endgenerate
@@ -58,7 +58,7 @@ module wb(
     assign wb_commit_port_we = 'b1;
 
     generate
-        for(i = 0;i < `EXECUTE_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `EXECUTE_UNIT_NUM;i++) begin
             assign wb_commit_port_data_in.op_info[i].enable = execute_wb_port[i].enable;
             assign wb_commit_port_data_in.op_info[i].value = execute_wb_port[i].value;
             assign wb_commit_port_data_in.op_info[i].valid = execute_wb_port[i].valid;

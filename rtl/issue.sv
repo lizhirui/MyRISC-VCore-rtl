@@ -228,9 +228,9 @@ module issue(
     assign issue_iq_flush = commit_feedback_pack.enable && commit_feedback_pack.flush;
 
     generate
-        for(i = 0;i < `READREG_WIDTH;i = i + 1) begin: issue_input
+        for(i = 0;i < `READREG_WIDTH;i++) begin: issue_input
             //generate input port execute feedback information
-            for(j = 0;j < `EXECUTE_UNIT_NUM;j = j + 1) begin
+            for(j = 0;j < `EXECUTE_UNIT_NUM;j++) begin
                 assign input_phy_exefb_cmp[i][0][j] = execute_feedback_pack.channel[j].enable && (cur_op[i].rs1_phy == execute_feedback_pack.channel[j].phy_id);
                 assign input_phy_exefb_cmp[i][1][j] = execute_feedback_pack.channel[j].enable && (cur_op[i].rs2_phy == execute_feedback_pack.channel[j].phy_id);
             end
@@ -252,7 +252,7 @@ module issue(
             );
 
             //generate input port wb feedback information
-            for(j = 0;j < `WB_WIDTH;j = j + 1) begin
+            for(j = 0;j < `WB_WIDTH;j++) begin
                 assign input_phy_wbfb_cmp[i][0][j] = wb_feedback_pack.channel[j].enable && (cur_op[i].rs1_phy == wb_feedback_pack.channel[j].phy_id);
                 assign input_phy_wbfb_cmp[i][1][j] = wb_feedback_pack.channel[j].enable && (cur_op[i].rs2_phy == wb_feedback_pack.channel[j].phy_id);
             end
@@ -378,7 +378,7 @@ module issue(
 
     //redirected result from last cycle
     generate
-        for(i = 0;i < `READREG_WIDTH;i = i + 1) begin
+        for(i = 0;i < `READREG_WIDTH;i++) begin
             assign redirected_valid[i] = (i + last_index) < `READREG_WIDTH;
             assign t_item_redirected[i] = redirected_valid[i] ? t_item[i + last_index] : t_item_empty;
             assign redirected_pack_valid[i] = redirected_valid[i] && t_item_redirected[i].enable;
@@ -411,7 +411,7 @@ module issue(
     //--------------------------------------------------------------------output part----------------------------------------------------------------------------
     //--------------------------------------------------------------------output part----------------------------------------------------------------------------
     //count used execute unit
-    for(i = 0;i < `ISSUE_WIDTH;i = i + 1) begin
+    for(i = 0;i < `ISSUE_WIDTH;i++) begin
         assign issue_has_alu_op_cmp[i] = iq_issue_data_valid[i] && iq_issue_data[i].op_unit == op_unit_t::alu;
         assign issue_has_bru_op_cmp[i] = iq_issue_data_valid[i] && iq_issue_data[i].op_unit == op_unit_t::bru;
         assign issue_has_csr_op_cmp[i] = iq_issue_data_valid[i] && iq_issue_data[i].op_unit == op_unit_t::csr;
@@ -573,7 +573,7 @@ module issue(
 
     //use round-robin algorithm to assign execute unit for every instruction from issue queue output port
     generate
-        for(i = 0;i < `ISSUE_WIDTH;i = i + 1) begin
+        for(i = 0;i < `ISSUE_WIDTH;i++) begin
             if(i == 0) begin
                 assign send_alu_index[i] = 'b0;
                 assign send_bru_index[i] = 'b0;
@@ -595,8 +595,8 @@ module issue(
 
     //redirect every instruction to corresponding execute unit input port
     generate
-        for(i = 0;i < `ALU_UNIT_NUM;i = i + 1) begin: alu_send_inst_generate
-            for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
+        for(i = 0;i < `ALU_UNIT_NUM;i++) begin: alu_send_inst_generate
+            for(j = 0;j < `ISSUE_WIDTH;j++) begin
                 assign alu_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::alu) && (available_alu_index[send_alu_index[j]] == i);
             end
 
@@ -615,8 +615,8 @@ module issue(
     endgenerate
 
     generate
-        for(i = 0;i < `BRU_UNIT_NUM;i = i + 1) begin: bru_send_inst_generate
-            for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
+        for(i = 0;i < `BRU_UNIT_NUM;i++) begin: bru_send_inst_generate
+            for(j = 0;j < `ISSUE_WIDTH;j++) begin
                 assign bru_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::bru) && (available_bru_index[send_bru_index[j]] == i);
             end
 
@@ -635,8 +635,8 @@ module issue(
     endgenerate
 
     generate
-        for(i = 0;i < `CSR_UNIT_NUM;i = i + 1) begin: csr_send_inst_generate
-            for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
+        for(i = 0;i < `CSR_UNIT_NUM;i++) begin: csr_send_inst_generate
+            for(j = 0;j < `ISSUE_WIDTH;j++) begin
                 assign csr_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::csr) && (available_csr_index[send_csr_index[j]] == i);
             end
 
@@ -655,8 +655,8 @@ module issue(
     endgenerate
 
     generate
-        for(i = 0;i < `DIV_UNIT_NUM;i = i + 1) begin: div_send_inst_generate
-            for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
+        for(i = 0;i < `DIV_UNIT_NUM;i++) begin: div_send_inst_generate
+            for(j = 0;j < `ISSUE_WIDTH;j++) begin
                 assign div_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::div) && (available_div_index[send_div_index[j]] == i);
             end
 
@@ -675,8 +675,8 @@ module issue(
     endgenerate
 
     generate
-        for(i = 0;i < `LSU_UNIT_NUM;i = i + 1) begin: lsu_send_inst_generate
-            for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
+        for(i = 0;i < `LSU_UNIT_NUM;i++) begin: lsu_send_inst_generate
+            for(j = 0;j < `ISSUE_WIDTH;j++) begin
                 assign lsu_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::lsu) && (available_lsu_index[send_lsu_index[j]] == i);
             end
 
@@ -695,8 +695,8 @@ module issue(
     endgenerate
 
     generate
-        for(i = 0;i < `MUL_UNIT_NUM;i = i + 1) begin: mul_send_inst_generate
-            for(j = 0;j < `ISSUE_WIDTH;j = j + 1) begin
+        for(i = 0;i < `MUL_UNIT_NUM;i++) begin: mul_send_inst_generate
+            for(j = 0;j < `ISSUE_WIDTH;j++) begin
                 assign mul_send_inst_cmp[i][j] = iq_issue_data_valid[j] && (iq_issue_data[j].op_unit == op_unit_t::mul) && (available_mul_index[send_mul_index[j]] == i);
             end
 

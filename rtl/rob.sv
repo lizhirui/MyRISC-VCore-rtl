@@ -90,7 +90,7 @@ module rob(
     end
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign rob_rename_new_id[i] = wptr[DEPTH_WIDTH - 1:0] + unsigned'(i);
             assign rob_rename_new_id_valid[i] = ((rob_rename_new_id[i] < rptr[DEPTH_WIDTH - 1:0]) || (rob_rename_new_id[i] >= wptr[DEPTH_WIDTH - 1:0]));
         end
@@ -116,7 +116,7 @@ module rob(
     assign wptr_next = full ? wptr : rename_rob_push ? (wptr + new_num) : wptr;
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign write_channel_addr[i] = rob_rename_new_id[i];
             assign write_channel_data[i] = rename_rob_data[i];
             assign write_channel_enable[i] = rename_rob_data_valid && rob_rename_new_id_valid[i];
@@ -124,7 +124,7 @@ module rob(
     endgenerate
 
     generate
-        for(i = 0;i < `WB_WIDTH;i = i + 1) begin
+        for(i = 0;i < `WB_WIDTH;i++) begin
             assign write_channel_addr[`RENAME_WIDTH + i] = commit_rob_input_id[i];
             assign write_channel_data[`RENAME_WIDTH + i] = commit_rob_input_data[i];
             assign write_channel_enable[`RENAME_WIDTH + i] = commit_rob_input_data_we[i];
@@ -132,8 +132,8 @@ module rob(
     endgenerate
 
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin: write_port_mux
-            for(j = 0;j < WRITE_CHANNEL_NUM;j = j + 1) begin
+        for(i = 0;i < DEPTH;i++) begin: write_port_mux
+            for(j = 0;j < WRITE_CHANNEL_NUM;j++) begin
                 assign buffer_write_port_addr_cmp[i][j] = (write_channel_addr[j] == unsigned'(i)) && write_channel_enable[j];
             end
 
@@ -150,7 +150,7 @@ module rob(
     endgenerate
 
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             always_ff @(posedge clk) begin
                 if(!rst) begin
                     if(buffer_write_port_enable[i]) begin
@@ -162,13 +162,13 @@ module rob(
     endgenerate
 
     generate
-        for(i = 0;i < `WB_WIDTH;i = i + 1) begin
+        for(i = 0;i < `WB_WIDTH;i++) begin
             assign rob_commit_input_data[i] = buffer[commit_rob_input_id[i]];
         end
     endgenerate
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign rob_commit_retire_data[i] = buffer[commit_rob_retire_id[i]];
             assign rob_commit_retire_id_valid[i] = `ptr_in_range(commit_rob_retire_id[i], rptr, wptr, DEPTH_WIDTH);
         end

@@ -157,7 +157,7 @@ module commit(
     assign commit_csrf_we = (cur_state == STATE_NORMAL) ? normal_csrf_we : (cur_state == STATE_FLUSH) ? flush_csrf_we : interrupt_flush_csrf_we;
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign commit_rob_retire_id[i] = rob_commit_retire_head_id + i;
         end
     endgenerate
@@ -165,7 +165,7 @@ module commit(
     generate
         assign commit_rob_retire_valid[0] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[0] && rob_commit_retire_data[0].finish;
 
-        for(i = 1;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 1;i < `COMMIT_WIDTH;i++) begin
             assign commit_rob_retire_valid[i] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[i] && 
                                                 rob_commit_retire_data[i].finish && ((commit_rob_retire_valid[i - 1] && 
                                                 !rob_commit_retire_data[i - 1].has_exception && !rob_commit_retire_data[i - 1].bru_op));
@@ -173,13 +173,13 @@ module commit(
     endgenerate
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign commit_rob_retire_pop[i] = (cur_state == STATE_NORMAL) && (next_state != STATE_INTERRUPT_FLUSH) && commit_rob_retire_valid[i] && !rob_commit_retire_data[i].has_exception;
         end
     endgenerate
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign retire_has_exception_cmp[i] = commit_rob_retire_valid[i] &&
                                                  rob_commit_retire_data[i].has_exception;
         end
@@ -195,7 +195,7 @@ module commit(
     );
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign retire_is_predicted_cmp[i] = commit_rob_retire_valid[i] &&
                                                 rob_commit_retire_data[i].bru_op && rob_commit_retire_data[i].predicted;
         end
@@ -210,7 +210,7 @@ module commit(
     );
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH; i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH; i++) begin
             assign bru_op_is_hit[i] = (rob_commit_retire_data[i].bru_jump == rob_commit_retire_data[i].predicted_jump) &&
                                       ((rob_commit_retire_data[i].bru_next_pc == rob_commit_retire_data[i].predicted_next_pc) ||
                                       !rob_commit_retire_data[i].predicted_jump);
@@ -218,7 +218,7 @@ module commit(
     endgenerate
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign retire_is_hit_cmp[i] = commit_rob_retire_valid[i] &&
                                           rob_commit_retire_data[i].bru_op && rob_commit_retire_data[i].predicted && 
                                           bru_op_is_hit[i];
@@ -234,7 +234,7 @@ module commit(
     );
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign retire_is_miss_cmp[i] = commit_rob_retire_valid[i] &&
                                            rob_commit_retire_data[i].bru_op && rob_commit_retire_data[i].predicted && 
                                            !bru_op_is_hit[i];
@@ -250,7 +250,7 @@ module commit(
     );
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign retire_has_bru_op_cmp[i] = commit_rob_retire_valid[i] && rob_commit_retire_data[i].bru_op;
         end
     endgenerate
@@ -265,7 +265,7 @@ module commit(
     );
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign commit_rat_release_phy_id[i] = rob_commit_retire_data[i].old_phy_reg_id;
             assign commit_rat_release_phy_id_valid[i] = commit_rob_retire_valid[i] && !rob_commit_retire_data[i].has_exception && rob_commit_retire_data[i].old_phy_reg_id_valid;
             assign commit_phyf_id[i] = rob_commit_retire_data[i].old_phy_reg_id;
@@ -285,7 +285,7 @@ module commit(
             assign commit_cpbuf_pop[i] = (cur_state == STATE_NORMAL) && (next_state != STATE_INTERRUPT_FLUSH) && commit_rob_retire_valid[i] && !rob_commit_retire_data[i].has_exception && retire_is_hit_cmp[i];
         end
 
-        for(i = `COMMIT_WIDTH;i < `COMMIT_CSR_CHANNEL_NUM;i = i + 1) begin
+        for(i = `COMMIT_WIDTH;i < `COMMIT_CSR_CHANNEL_NUM;i++) begin
             assign normal_csrf_write_addr[i] = 'b0;
             assign normal_csrf_write_data[i] = 'b0;
             assign normal_csrf_we[i] = 'b0;
@@ -321,7 +321,7 @@ module commit(
     assign commit_csrf_branch_miss_add = (cur_state == STATE_NORMAL) && retire_is_miss;
 
     generate
-        for(i = 0;i < `WB_WIDTH;i = i + 1) begin
+        for(i = 0;i < `WB_WIDTH;i++) begin
             assign input_rob_item[i].new_phy_reg_id = rob_commit_input_data[i].new_phy_reg_id;
             assign input_rob_item[i].old_phy_reg_id = rob_commit_input_data[i].old_phy_reg_id;
             assign input_rob_item[i].old_phy_reg_id_valid = rob_commit_input_data[i].old_phy_reg_id_valid;
@@ -439,7 +439,7 @@ module commit(
     assign normal_feedback_pack.flush = intif_commit_has_interrupt || retire_has_exception || retire_is_miss;
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign normal_feedback_pack.committed_rob_id[i] = commit_rob_retire_id[i];
             assign normal_feedback_pack.committed_rob_id_valid[i] = (next_state != STATE_INTERRUPT_FLUSH) && commit_rob_retire_valid[i];
         end

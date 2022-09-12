@@ -14,27 +14,27 @@ module execute_feedback(
     genvar i;
 
     generate
-        for(i = 0;i < `ALU_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `ALU_UNIT_NUM;i++) begin
             assign execute_feedback_pack.channel[i] = alu_execute_channel_feedback_pack[i];
         end
 
-        for(i = 0;i < `BRU_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `BRU_UNIT_NUM;i++) begin
             assign execute_feedback_pack.channel[`ALU_UNIT_NUM + i] = bru_execute_channel_feedback_pack[i];
         end
 
-        for(i = 0;i < `CSR_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `CSR_UNIT_NUM;i++) begin
             assign execute_feedback_pack.channel[`ALU_UNIT_NUM + `BRU_UNIT_NUM + i] = csr_execute_channel_feedback_pack[i];
         end
 
-        for(i = 0;i < `DIV_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `DIV_UNIT_NUM;i++) begin
             assign execute_feedback_pack.channel[`ALU_UNIT_NUM + `BRU_UNIT_NUM + `CSR_UNIT_NUM + i] = div_execute_channel_feedback_pack[i];
         end
 
-        for(i = 0;i < `LSU_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `LSU_UNIT_NUM;i++) begin
             assign execute_feedback_pack.channel[`ALU_UNIT_NUM + `BRU_UNIT_NUM + `CSR_UNIT_NUM + `DIV_UNIT_NUM + i] = lsu_execute_channel_feedback_pack[i];
         end
 
-        for(i = 0;i < `MUL_UNIT_NUM;i = i + 1) begin
+        for(i = 0;i < `MUL_UNIT_NUM;i++) begin
             assign execute_feedback_pack.channel[`ALU_UNIT_NUM + `BRU_UNIT_NUM + `CSR_UNIT_NUM + `DIV_UNIT_NUM + `LSU_UNIT_NUM + i] = mul_execute_channel_feedback_pack[i];
         end
     endgenerate

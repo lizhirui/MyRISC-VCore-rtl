@@ -122,7 +122,7 @@ module store_buffer(
     assign wptr_next = flush ? flush_next_wptr : full ? wptr : exlsu_stbuf_push ? (wptr + 'b1) : wptr;
 
     generate 
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             assign flush_cur_ptr[i] = rptr + i;
             assign flush_commit_cmp[i] = `ptr_in_range(flush_cur_ptr[i], rptr, wptr, DEPTH_WIDTH) && 
                                          (!commit_feedback_pack.enable || !ready_to_commit[flush_cur_ptr[i]]) && 
@@ -154,7 +154,7 @@ module store_buffer(
             assign feedback_input_data[i] = feedback_data[i - 1];
         end
 
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             assign feedback_cur_id[i] = rptr + i;
             assign feedback_cur_item[i] = buffer[feedback_cur_id[i]];
             assign feedback_bit_mask[i] = (unsigned'(`BUS_DATA_WIDTH'b1) << feedback_bit_length[i]) - 'b1;
@@ -197,8 +197,8 @@ module store_buffer(
     assign stbuf_bus_write_req = cur_item.enable && cur_item.committed && !flush && !empty;
     
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin: ready_to_commit_generate
-            for(j = 0;j < `COMMIT_WIDTH;j = j + 1) begin
+        for(i = 0;i < DEPTH;i++) begin: ready_to_commit_generate
+            for(j = 0;j < `COMMIT_WIDTH;j++) begin
                 assign ready_to_commit_cmp[i][j] = `ptr_in_range(unsigned'(i), rptr, wptr, DEPTH_WIDTH) && 
                                                    commit_feedback_pack.committed_rob_id_valid[j] &&
                                                    (commit_feedback_pack.committed_rob_id[j] == buffer[i].rob_id);
@@ -214,7 +214,7 @@ module store_buffer(
     endgenerate
 
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             always_ff @(posedge clk) begin
                 if(!rst) begin
                     if(exlsu_stbuf_push && !full && (unsigned'(i) == wptr[DEPTH_WIDTH - 1:0])) begin

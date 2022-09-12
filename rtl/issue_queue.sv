@@ -197,7 +197,7 @@ module issue_queue #(
                                         //csr or mret instruction must be issued only when that's the first issued instruction at this time
                                         //and corresponding rob_id must be next_handle_rob_id
 
-        for(i = 1;i < DEPTH;i = i + 1) begin
+        for(i = 1;i < DEPTH;i++) begin
             //let last exeucte unit remain number as current remain_num_input
             assign alu_remain_num_input[i] = alu_remain_num[i - 1];
             assign bru_remain_num_input[i] = bru_remain_num[i - 1];
@@ -228,7 +228,7 @@ module issue_queue #(
                                             //and corresponding rob_id must be next_handle_rob_id
         end
 
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             //update execute unit remain number
             assign alu_remain_num[i] = (alu_remain_num_input[i] == 'b0) ? 'b0 : (alu_remain_num_input[i] - (((buffer_feedback[i].op_unit == op_unit_t::alu) && buffer_item_invalid[i]) ? 'b1 : 'b0));
             assign bru_remain_num[i] = (bru_remain_num_input[i] == 'b0) ? 'b0 : (bru_remain_num_input[i] - (((buffer_feedback[i].op_unit == op_unit_t::bru) && buffer_item_invalid[i]) ? 'b1 : 'b0));
@@ -248,8 +248,8 @@ module issue_queue #(
 
     //generate output port index -> buffer_feedback item index map
     generate
-        for(i = 0;i < OUTPUT_PORT_NUM;i = i + 1) begin
-            for(j = 0;j < DEPTH;j = j + 1) begin
+        for(i = 0;i < OUTPUT_PORT_NUM;i++) begin
+            for(j = 0;j < DEPTH;j++) begin
                 assign output_port_map_cmp[i][j] = (i == cur_output_index[j]) && buffer_item_invalid[j];
             end
 
@@ -265,7 +265,7 @@ module issue_queue #(
 
     //map output data to output port
     generate
-        for(i = 0;i < OUTPUT_PORT_NUM;i = i + 1) begin
+        for(i = 0;i < OUTPUT_PORT_NUM;i++) begin
             assign iq_issue_data[i] = buffer_feedback[output_port_map_index[i]];
             assign iq_issue_data_valid[i] = output_port_map_valid[i];
         end
@@ -273,7 +273,7 @@ module issue_queue #(
 
     //generate instruction waiting information
     generate
-        for(i = 0;i < OUTPUT_PORT_NUM;i = i + 1) begin
+        for(i = 0;i < OUTPUT_PORT_NUM;i++) begin
             assign inst_rob_id[i] = iq_issue_data[i].rob_id;
             assign inst_rob_id_cmp[i] = ((iq_issue_data[i].op_unit == op_unit_t::csr) || (iq_issue_data[i].op == op_t::mret)) && iq_issue_data_valid[i];
         end
@@ -302,7 +302,7 @@ module issue_queue #(
 
     //generate inst_waiting_ok signal to indicate waiting instruction has done.
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign inst_waiting_ok_cmp[i] = commit_feedback_pack.enable && commit_feedback_pack.committed_rob_id_valid[i] && (commit_feedback_pack.committed_rob_id[i] == inst_waiting_rob_id);
         end
     endgenerate
@@ -347,8 +347,8 @@ module issue_queue #(
 
     //generate phy feedback information
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin: issue_input
-            for(j = 0;j < `EXECUTE_UNIT_NUM;j = j + 1) begin
+        for(i = 0;i < DEPTH;i++) begin: issue_input
+            for(j = 0;j < `EXECUTE_UNIT_NUM;j++) begin
                 assign phy_exefb_cmp[i][0][j] = execute_feedback_pack.channel[j].enable && (buffer[i].rs1_phy == execute_feedback_pack.channel[j].phy_id);
                 assign phy_exefb_cmp[i][1][j] = execute_feedback_pack.channel[j].enable && (buffer[i].rs2_phy == execute_feedback_pack.channel[j].phy_id);
             end
@@ -369,7 +369,7 @@ module issue_queue #(
                 .index_valid(phy_exefb_index_valid[i][1])
             );
 
-            for(j = 0;j < `WB_WIDTH;j = j + 1) begin
+            for(j = 0;j < `WB_WIDTH;j++) begin
                 assign phy_wbfb_cmp[i][0][j] = wb_feedback_pack.channel[j].enable && (buffer[i].rs1_phy == wb_feedback_pack.channel[j].phy_id);
                 assign phy_wbfb_cmp[i][1][j] = wb_feedback_pack.channel[j].enable && (buffer[i].rs2_phy == wb_feedback_pack.channel[j].phy_id);
             end
@@ -394,7 +394,7 @@ module issue_queue #(
 
     //generate buffer_feedback
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             assign buffer_feedback[i].enable = buffer[i].enable;
             assign buffer_feedback[i].value = buffer[i].value;
             assign buffer_feedback[i].valid = buffer[i].valid;
@@ -443,7 +443,7 @@ module issue_queue #(
 
     //generate buffer_input
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             assign buffer_input[i] = (i >= wptr) && (i < (wptr + INPUT_PORT_NUM)) ? issue_iq_data[i - wptr] : buffer_feedback[i];
         end
     endgenerate
@@ -452,13 +452,13 @@ module issue_queue #(
     //if buffer_map_dst[i] == j and buffer_map_dst_valid[i] == true, a map from i to j is exist
     //buffer_map_dst[i] has definition only when buffer_map_dst_valid[i] == true, otherwise, corresponding item will be compressed(i.e., removed)
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             assign buffer_map_dst_valid[i] = !buffer_item_invalid[i];
         end
 
         assign buffer_map_dst[0] = 'b0;
 
-        for(i = 1;i < DEPTH;i = i + 1) begin
+        for(i = 1;i < DEPTH;i++) begin
             assign buffer_map_dst[i] = buffer_map_dst_valid[i - 1] ? (buffer_map_dst[i - 1] + 'b1) : buffer_map_dst[i - 1];
         end
     endgenerate
@@ -467,8 +467,8 @@ module issue_queue #(
     //if buffer_map_src[j] == i and buffer_need_map[j] == true, a map from i to j is exist
     //buffer_map_src[j] has definition only when buffer_need_map[j] == true, otherwise, corresponding item will be a unknown item
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin: buffer_map_dst_to_buffer_map_src
-            for(j = 0;j < DEPTH;j = j + 1) begin
+        for(i = 0;i < DEPTH;i++) begin: buffer_map_dst_to_buffer_map_src
+            for(j = 0;j < DEPTH;j++) begin
                 assign buffer_map_dst_cmp[i][j] = (buffer_map_dst[j] == i) && buffer_map_dst_valid[j];
             end
 
@@ -487,7 +487,7 @@ module issue_queue #(
 
     //update buffer with dst->src map
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             always_ff @(posedge clk) begin
                 if(buffer_need_map[i]) begin
                     buffer[i] <= buffer_input[buffer_map_src[i]];

@@ -56,7 +56,7 @@ module checkpoint_buffer(
     assign cpbuf_fetch_new_id_valid = !full;
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign read_channel_addr[i] = rename_cpbuf_id[i];
             assign cpbuf_rename_data[i] = read_channel_data[i];
         end
@@ -66,7 +66,7 @@ module checkpoint_buffer(
     assign cpbuf_exbru_data = read_channel_data[`RENAME_WIDTH];
 
     generate
-        for(i = 0;i < `COMMIT_WIDTH;i = i + 1) begin
+        for(i = 0;i < `COMMIT_WIDTH;i++) begin
             assign read_channel_addr[`RENAME_WIDTH + 1 + i] = commit_cpbuf_id[i];
             assign cpbuf_commit_data[i] = read_channel_data[`RENAME_WIDTH + 1 + i];
         end
@@ -77,7 +77,7 @@ module checkpoint_buffer(
     assign write_channel_enable[0] = fetch_cpbuf_push;
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign write_channel_addr[1 + i] = rename_cpbuf_id[i];
             assign write_channel_data[1 + i] = rename_cpbuf_data[i];
             assign write_channel_enable[1 + i] = rename_cpbuf_we[i];
@@ -135,8 +135,8 @@ module checkpoint_buffer(
     end
 
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin: write_port_mux
-            for(j = 0;j < WRITE_CHANNEL_NUM;j = j + 1) begin
+        for(i = 0;i < DEPTH;i++) begin: write_port_mux
+            for(j = 0;j < WRITE_CHANNEL_NUM;j++) begin
                 assign buffer_write_port_addr_cmp[i][j] = (write_channel_addr[j] == unsigned'(i)) && write_channel_enable[j];
             end
 
@@ -153,7 +153,7 @@ module checkpoint_buffer(
     endgenerate
 
     generate
-        for(i = 0;i < DEPTH;i = i + 1) begin
+        for(i = 0;i < DEPTH;i++) begin
             always_ff @(posedge clk) begin
                 if(!rst) begin
                     if(buffer_write_port_enable[i]) begin
@@ -165,7 +165,7 @@ module checkpoint_buffer(
     endgenerate
 
     generate
-        for(i = 0;i < READ_CHANNEL_NUM;i = i + 1) begin
+        for(i = 0;i < READ_CHANNEL_NUM;i++) begin
             assign read_channel_data[i] = buffer[read_channel_addr[i]];
         end
     endgenerate

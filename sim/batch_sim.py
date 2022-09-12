@@ -82,10 +82,10 @@ class dynamic_check_thread(threading.Thread):
             while True:
                 start_time = time.time()
 
-                if len(item) == 3:
-                    ret = shell(["./run_xrun.sh"] + [item[0], item[2], item[1]])
+                if len(item) == 4:
+                    ret = shell(["./run_" + item[3] + ".sh"] + [item[0], item[2], item[1]])
                 else:
-                    ret = shell(["./run_xrun.sh"] + item)
+                    ret = shell(["./run_" + item[2] + ".sh"] + [item[0], item[1]])
 
                 end_time = time.time()
                 elapsed_time = to_human_friendly_time(end_time - start_time)
@@ -138,7 +138,8 @@ class dynamic_check_thread(threading.Thread):
                 unknown_error_cnt += 1
                 print_lock.release()
 
-            if "*W" in ret.replace("*W,BADPRF", "").replace("*W,PRLDYN", ""):
+            if "*W" in ret.replace("*W,BADPRF", "").replace("*W,PRLDYN", "").replace("*W,WKWTLK", "") or \
+                "Warning-" in ret.replace("Warning-[DEBUG_DEP] Option will be deprecated", "").replace("Warning-[LINX_KRNL] Unsupported Linux kernel", ""):
                 print_lock.acquire()
                 yellow_text("Warnings had been found: ")
                 print(ret)
@@ -187,6 +188,9 @@ group_testcase_list = {}
 trace_list = []
 testcase_list = []
 
+vcs_ignore_list = []
+xrun_ignore_list = []
+
 if "difftest" in tb_groups:
     if not args.trace_name is None:
         if not os.path.exists(os.path.join(trace_dir, args.trace_name)):
@@ -215,9 +219,17 @@ original_testcase_list.sort(key = file_key)
 for item in original_testcase_list:
     if item[0] == "difftest":
         for trace in trace_list:
-            testcase_list.append([item[0], item[1], trace])
+            if not (item[0] + "-" + item[1]) in vcs_ignore_list:
+                testcase_list.append([item[0], item[1], trace, "vcs"])
+
+            if not (item[0] + "-" + item[1]) in xrun_ignore_list:
+                testcase_list.append([item[0], item[1], trace, "xrun"])
     else:
-        testcase_list.append([item[0], item[1]])
+        if not (item[0] + "-" + item[1]) in vcs_ignore_list:
+            testcase_list.append([item[0], item[1], "vcs"])
+
+        if not (item[0] + "-" + item[1]) in xrun_ignore_list:
+            testcase_list.append([item[0], item[1], "xrun"])
 
 if len(trace_list) > 0:
     print(str(len(trace_list)) + " traces are found: ")
@@ -249,6 +261,8 @@ if actual_parallel_count < parallel_count:
     warning("You request " + str(parallel_count) + " threads, but only " + str(len(testcase_list)) + " testcases need to be tested!")
 
 total_task_num = len(testcase_list)
+
+'''
 average_task_num_floor = math.floor(len(testcase_list) / actual_parallel_count)
 average_task_num_ceil = math.ceil(len(testcase_list) / actual_parallel_count)
 average_task_num = average_task_num_floor if (average_task_num_floor * (actual_parallel_count - 1)) > (average_task_num_ceil * (actual_parallel_count)) else average_task_num_ceil
@@ -259,6 +273,7 @@ if average_task_num * (actual_parallel_count - 1) >= total_task_num:
 
 assigned_task_num = 0
 
+
 thread_task_list = []
 thread_list = []
 
@@ -267,6 +282,25 @@ for i in range(0, actual_parallel_count):
     thread_task_list.append(testcase_list[assigned_task_num : (assigned_task_num + task_num)])
     assigned_task_num += task_num
     #green_text("Thread " + str(i) + " is assigned " + str(task_num) + " tasks")
+'''
+
+thread_task_list = [[] for i in range(0, parallel_count)]
+thread_list = []
+
+assigned_task_num = 0
+cur_thread_id = 0
+
+for i in range(0, total_task_num):
+    if testcase_list[i][0] != "difftest":
+        thread_task_list[cur_thread_id].append(testcase_list[i])
+        assigned_task_num += 1
+        cur_thread_id = (cur_thread_id + 1) % parallel_count
+
+for i in range(0, total_task_num):
+    if testcase_list[i][0] == "difftest":
+        thread_task_list[cur_thread_id].append(testcase_list[i])
+        assigned_task_num += 1
+        cur_thread_id = (cur_thread_id + 1) % parallel_count
 
 print("The count of total assigned tasks is " + str(total_task_num) + " , the count of actual assigned tasks is " + str(assigned_task_num))
 

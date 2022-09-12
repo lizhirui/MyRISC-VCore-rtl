@@ -169,7 +169,7 @@ module top;
             commit_feedback_pack.enable = tdb.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0);
             commit_feedback_pack.flush = tdb.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0);
             eval();
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "exbru_bp_valid", 0), exbru_bp_valid);
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "exbru_bp_valid", 0), exbru_bp_valid)
 
             if(exbru_bp_valid) begin
                 `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb, DOMAIN_OUTPUT, "exbru_bp_cp.rat_phy_map_table_valid", 0), exbru_bp_cp.rat_phy_map_table_valid)

@@ -393,7 +393,7 @@ module core_top(
     issue issue_inst(.*);
 
     generate
-        for(i = 0;i < `ALU_UNIT_NUM;i = i + 1) begin: execute_alu_generate
+        for(i = 0;i < `ALU_UNIT_NUM;i++) begin: execute_alu_generate
             execute_alu execute_alu_inst(
                 .*,
                 .issue_alu_fifo_data_out(issue_alu_fifo_data_out[i]),
@@ -408,7 +408,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `BRU_UNIT_NUM;i = i + 1) begin: execute_bru_generate
+        for(i = 0;i < `BRU_UNIT_NUM;i++) begin: execute_bru_generate
             execute_bru execute_bru_inst(
                 .*,
                 .issue_bru_fifo_data_out(issue_bru_fifo_data_out[i]),
@@ -423,7 +423,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `CSR_UNIT_NUM;i = i + 1) begin: execute_csr_generate
+        for(i = 0;i < `CSR_UNIT_NUM;i++) begin: execute_csr_generate
             execute_csr execute_csr_inst(
                 .*,
                 .issue_csr_fifo_data_out(issue_csr_fifo_data_out[i]),
@@ -438,7 +438,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `DIV_UNIT_NUM;i = i + 1) begin: execute_div_generate
+        for(i = 0;i < `DIV_UNIT_NUM;i++) begin: execute_div_generate
             execute_div execute_div_inst(
                 .*,
                 .issue_div_fifo_data_out(issue_div_fifo_data_out[i]),
@@ -453,7 +453,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `LSU_UNIT_NUM;i = i + 1) begin: execute_lsu_generate
+        for(i = 0;i < `LSU_UNIT_NUM;i++) begin: execute_lsu_generate
             execute_lsu execute_lsu_inst(
                 .*,
                 .issue_lsu_fifo_data_out(issue_lsu_fifo_data_out[i]),
@@ -468,7 +468,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `MUL_UNIT_NUM;i = i + 1) begin: execute_mul_generate
+        for(i = 0;i < `MUL_UNIT_NUM;i++) begin: execute_mul_generate
             execute_mul execute_mul_inst(
                 .*,
                 .issue_mul_fifo_data_out(issue_mul_fifo_data_out[i]),
@@ -558,7 +558,7 @@ module core_top(
     );
 
     generate
-        for(i = 0;i < `ALU_UNIT_NUM;i = i + 1) begin: fifo_issue_alu_interface
+        for(i = 0;i < `ALU_UNIT_NUM;i++) begin: fifo_issue_alu_interface
             fifo #(
                 .WIDTH($bits(issue_execute_pack_t)),
                 .DEPTH(1)
@@ -577,7 +577,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `BRU_UNIT_NUM;i = i + 1) begin: fifo_issue_bru_interface
+        for(i = 0;i < `BRU_UNIT_NUM;i++) begin: fifo_issue_bru_interface
             fifo #(
                 .WIDTH($bits(issue_execute_pack_t)),
                 .DEPTH(1)
@@ -596,7 +596,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `CSR_UNIT_NUM;i = i + 1) begin: fifo_issue_csr_interface
+        for(i = 0;i < `CSR_UNIT_NUM;i++) begin: fifo_issue_csr_interface
             fifo #(
                 .WIDTH($bits(issue_execute_pack_t)),
                 .DEPTH(1)
@@ -615,7 +615,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `DIV_UNIT_NUM;i = i + 1) begin: fifo_issue_div_interface
+        for(i = 0;i < `DIV_UNIT_NUM;i++) begin: fifo_issue_div_interface
             fifo #(
                 .WIDTH($bits(issue_execute_pack_t)),
                 .DEPTH(1)
@@ -634,7 +634,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `LSU_UNIT_NUM;i = i + 1) begin: fifo_issue_lsu_interface
+        for(i = 0;i < `LSU_UNIT_NUM;i++) begin: fifo_issue_lsu_interface
             fifo #(
                 .WIDTH($bits(issue_execute_pack_t)),
                 .DEPTH(1)
@@ -653,7 +653,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `MUL_UNIT_NUM;i = i + 1) begin: fifo_issue_mul_interface
+        for(i = 0;i < `MUL_UNIT_NUM;i++) begin: fifo_issue_mul_interface
             fifo #(
                 .WIDTH($bits(issue_execute_pack_t)),
                 .DEPTH(1)
@@ -672,7 +672,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `ALU_UNIT_NUM;i = i + 1) begin:port_alu_wb_interface
+        for(i = 0;i < `ALU_UNIT_NUM;i++) begin:port_alu_wb_interface
             port #(
                 .WIDTH($bits(execute_wb_pack_t))
             )port_execute_alu_wb_inst(
@@ -686,7 +686,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `BRU_UNIT_NUM;i = i + 1) begin:port_bru_wb_interface
+        for(i = 0;i < `BRU_UNIT_NUM;i++) begin:port_bru_wb_interface
             port #(
                 .WIDTH($bits(execute_wb_pack_t))
             )port_execute_bru_wb_inst(
@@ -700,7 +700,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `CSR_UNIT_NUM;i = i + 1) begin:port_csr_wb_interface
+        for(i = 0;i < `CSR_UNIT_NUM;i++) begin:port_csr_wb_interface
             port #(
                 .WIDTH($bits(execute_wb_pack_t))
             )port_execute_csr_wb_inst(
@@ -714,7 +714,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `DIV_UNIT_NUM;i = i + 1) begin:port_div_wb_interface
+        for(i = 0;i < `DIV_UNIT_NUM;i++) begin:port_div_wb_interface
             port #(
                 .WIDTH($bits(execute_wb_pack_t))
             )port_execute_div_wb_inst(
@@ -728,7 +728,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `LSU_UNIT_NUM;i = i + 1) begin:port_lsu_wb_interface
+        for(i = 0;i < `LSU_UNIT_NUM;i++) begin:port_lsu_wb_interface
             port #(
                 .WIDTH($bits(execute_wb_pack_t))
             )port_execute_lsu_wb_inst(
@@ -742,7 +742,7 @@ module core_top(
     endgenerate
 
     generate
-        for(i = 0;i < `MUL_UNIT_NUM;i = i + 1) begin:port_mul_wb_interface
+        for(i = 0;i < `MUL_UNIT_NUM;i++) begin:port_mul_wb_interface
             port #(
                 .WIDTH($bits(execute_wb_pack_t))
             )port_execute_mul_wb_inst(

@@ -24,7 +24,7 @@ module count_one #(
 
         assign sum_temp[0] = data_in[0];
 
-        for(i = 1;i < WIDTH;i = i + 1) begin
+        for(i = 1;i < WIDTH;i++) begin
             if(CONTINUOUS) begin
                 assign found_blank[i] = found_blank[i - 1] | !data_in[i];
             end

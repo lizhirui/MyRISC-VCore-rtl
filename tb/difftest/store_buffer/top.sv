@@ -96,8 +96,8 @@ module top;
         cur_cycle = tdb.get_cur_row();
 
         while(1) begin
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_STATUS, "rptr", 0), store_buffer_inst.rptr);
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_STATUS, "wptr", 0), store_buffer_inst.wptr);
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_STATUS, "rptr", 0), store_buffer_inst.rptr)
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_STATUS, "wptr", 0), store_buffer_inst.wptr)
 
             if(cur_cycle > 0) begin
                 bus_stbuf_write_ack = tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_write_req", 0);
@@ -138,47 +138,47 @@ module top;
             eval();
 
             if(tdb.get_uint8(DOMAIN_INPUT, "bus_stbuf_read_ack", 0) == bus_stbuf_read_ack) begin
-                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_ready", 0), stbuf_exlsu_bus_ready);
+                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_ready", 0), stbuf_exlsu_bus_ready)
             end
             else begin
-                `assert_equal(cur_cycle, bus_stbuf_read_ack, stbuf_exlsu_bus_ready);
+                `assert_equal(cur_cycle, bus_stbuf_read_ack, stbuf_exlsu_bus_ready)
             end
 
             if(stbuf_exlsu_bus_ready && tdb.get_uint8(DOMAIN_INPUT, "bus_stbuf_read_ack", 0)) begin
                 case(read_size)
                     'd1: begin
-                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data", 0) & 'hff, stbuf_exlsu_bus_data[7:0]);
-                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data_feedback", 0) & 'hff, stbuf_exlsu_bus_data_feedback[7:0]);
+                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data", 0) & 'hff, stbuf_exlsu_bus_data[7:0])
+                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data_feedback", 0) & 'hff, stbuf_exlsu_bus_data_feedback[7:0])
                     end
 
                     'd2: begin
-                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data", 0) & 'hffff, stbuf_exlsu_bus_data[15:0]);
-                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data_feedback", 0) & 'hffff, stbuf_exlsu_bus_data_feedback[15:0]);
+                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data", 0) & 'hffff, stbuf_exlsu_bus_data[15:0])
+                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data_feedback", 0) & 'hffff, stbuf_exlsu_bus_data_feedback[15:0])
                     end
 
                     'd4: begin
-                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data", 0), stbuf_exlsu_bus_data[31:0]);
-                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data_feedback", 0), stbuf_exlsu_bus_data_feedback[31:0]);
+                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data", 0), stbuf_exlsu_bus_data[31:0])
+                        `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_exlsu_bus_data_feedback", 0), stbuf_exlsu_bus_data_feedback[31:0])
                     end
                     default: `assert(0)
                 endcase
                 
             end
             
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_exlsu_full", 0), stbuf_exlsu_full);
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_exlsu_full", 0), stbuf_exlsu_full)
             
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_read_req", 0), stbuf_bus_read_req);
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_read_req", 0), stbuf_bus_read_req)
 
             if(stbuf_bus_read_req) begin
-                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_bus_read_addr", 0), stbuf_bus_read_addr);
-                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_read_size", 0), stbuf_bus_read_size);
+                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_bus_read_addr", 0), stbuf_bus_read_addr)
+                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_read_size", 0), stbuf_bus_read_size)
             end
 
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_write_req", 0), stbuf_bus_write_req);
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_write_req", 0), stbuf_bus_write_req)
 
             if(stbuf_bus_write_req) begin
-                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_bus_write_addr", 0), stbuf_bus_write_addr);
-                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_write_size", 0), stbuf_bus_write_size);
+                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_bus_write_addr", 0), stbuf_bus_write_addr)
+                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "stbuf_bus_write_size", 0), stbuf_bus_write_size)
 
                 case(stbuf_bus_write_size)
                     'h1: `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "stbuf_bus_data", 0) & 'hff, stbuf_bus_data)

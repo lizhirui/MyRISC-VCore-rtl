@@ -129,19 +129,19 @@ module top;
             eval();
 
             if(tdb.get_uint16(DOMAIN_INPUT, "excsr_csrf_addr", 0) != 65535) begin
-                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_excsr_data", 0), csrf_excsr_data);
+                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_excsr_data", 0), csrf_excsr_data)
             end
 
             for(i = 0;i < 4;i++) begin
                 if(tdb.get_uint16(DOMAIN_INPUT, "commit_csrf_read_addr", i) != 65535) begin
-                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_commit_read_data", i), csrf_commit_read_data[i]);
+                    `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_commit_read_data", i), csrf_commit_read_data[i])
                 end
             end
 
-            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mie_data", 0), csrf_all_mie_data);
-            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mstatus_data", 0), csrf_all_mstatus_data);
-            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mip_data", 0), csrf_all_mip_data);
-            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mepc_data", 0), csrf_all_mepc_data);
+            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mie_data", 0), csrf_all_mie_data)
+            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mstatus_data", 0), csrf_all_mstatus_data)
+            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mip_data", 0), csrf_all_mip_data)
+            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "csrf_all_mepc_data", 0), csrf_all_mepc_data)
             wait_clk();
         end
     endtask

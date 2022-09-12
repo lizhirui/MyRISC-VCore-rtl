@@ -85,7 +85,7 @@ module rename(
     assign rename_readreg_port_flush = commit_feedback_pack.enable && commit_feedback_pack.flush;
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign decode_rename_fifo_data_pop_valid[i] = send_pack.op_info[i].enable;
         end
     endgenerate
@@ -94,7 +94,7 @@ module rename(
 
     //new phy id redirect
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign new_phy_id_need[i] = rev_pack_valid[i] && rev_pack[i].enable && rev_pack[i].valid && rev_pack[i].need_rename;
             assign new_phy_id[i] = rat_rename_new_phy_id[new_phy_id_channel_index[i]];
             assign new_phy_id_valid[i] = rat_rename_new_phy_id_valid[new_phy_id_channel_index[i]];
@@ -102,13 +102,13 @@ module rename(
 
         assign new_phy_id_channel_index[0] = 'b0;
 
-        for(i = 1;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 1;i < `RENAME_WIDTH;i++) begin
              assign new_phy_id_channel_index[i] = new_phy_id_need[i - 1] ? (new_phy_id_channel_index[i - 1] + 'b1) : new_phy_id_channel_index[i - 1];
         end
     endgenerate
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign send_pack.op_info[i].enable = rev_pack_valid[i] && rev_pack[i].enable && (new_phy_id_valid[i] || !rev_pack[i].valid || 
                                                  !rev_pack[i].need_rename) && rob_rename_new_id_valid[i];
             assign send_pack.op_info[i].value = rev_pack[i].value;
@@ -140,8 +140,8 @@ module rename(
     endgenerate
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin: rd_rs_feedback_generate
-            for(j = 0;j < i;j = j + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin: rd_rs_feedback_generate
+            for(j = 0;j < i;j++) begin
                 assign rd_old_phy_feedback_cmp[i][j] = rev_pack_valid[j] && rev_pack[j].enable && rev_pack[j].valid && rev_pack[j].need_rename &&
                                                        (rev_pack[j].rd == rev_pack[i].rd);
                 assign rs1_phy_feedback_cmp[i][j] = rev_pack_valid[j] && rev_pack[j].enable && rev_pack[j].valid && rev_pack[j].rd_enable && 
@@ -150,7 +150,7 @@ module rename(
                                                     (rev_pack[j].rd == rev_pack[i].rs2);
             end
 
-            for(j = i;j < `RENAME_WIDTH;j = j + 1) begin
+            for(j = i;j < `RENAME_WIDTH;j++) begin
                 assign rd_old_phy_feedback_cmp[i][j] = 'b0;
                 assign rs1_phy_feedback_cmp[i][j] = 'b0;
                 assign rs2_phy_feedback_cmp[i][j] = 'b0;
@@ -186,7 +186,7 @@ module rename(
     endgenerate
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign rename_rat_read_arch_id[i][0] = rev_pack[i].rs1;
             assign rename_rat_read_arch_id[i][1] = rev_pack[i].rs2;
             assign rename_rat_read_arch_id[i][2] = rev_pack[i].rd;
@@ -202,7 +202,7 @@ module rename(
     assign rename_rat_map = !rename_readreg_port_flush && rename_readreg_port_we;
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign rob_item[i].new_phy_reg_id = new_phy_id[i];
             assign rob_item[i].old_phy_reg_id = rd_old_phy_feedback_valid[i] ? 
                                                 new_phy_id[rd_old_phy_feedback_index[i]] :
@@ -235,13 +235,13 @@ module rename(
     assign rename_rob_push = !rename_readreg_port_flush && rename_readreg_port_we;
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign rename_cpbuf_id[i] = rev_pack[i].checkpoint_id;
             assign new_cp[i].global_history = cpbuf_rename_data[i].global_history;
             assign new_cp[i].local_history = cpbuf_rename_data[i].local_history;
 
             if(i == 0) begin
-                for(j = 0;j < `PHY_REG_NUM;j = j + 1) begin
+                for(j = 0;j < `PHY_REG_NUM;j++) begin
                     assign new_cp[i].rat_phy_map_table_valid[j] = !send_pack.op_info[i].enable || !rev_pack[i].valid || !rev_pack[i].need_rename ? 
                                                                   rat_rename_map_table_valid[j] :
                                                                   (j == send_pack.op_info[i].rd_phy) ? 'b1 : rat_rename_map_table_valid[j];
@@ -252,7 +252,7 @@ module rename(
                 end
             end
             else begin
-                for(j = 0;j < `PHY_REG_NUM;j = j + 1) begin
+                for(j = 0;j < `PHY_REG_NUM;j++) begin
                     assign new_cp[i].rat_phy_map_table_valid[j] = !send_pack.op_info[i].enable || !rev_pack[i].valid || !rev_pack[i].need_rename ? 
                                                                   new_cp[i - 1].rat_phy_map_table_valid[j] :
                                                                   (j == send_pack.op_info[i].rd_phy) ? 'b1 : new_cp[i - 1].rat_phy_map_table_valid[j];
@@ -269,7 +269,7 @@ module rename(
     endgenerate
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign phy_regfile_full_cmp[i] = rev_pack_valid[i] && rev_pack[i].enable && rev_pack[i].valid && rev_pack[i].need_rename && !new_phy_id_valid[i];
             assign rob_full_cmp[i] = rev_pack_valid[i] && rev_pack[i].enable && !rob_rename_new_id_valid[i];
         end

@@ -40,8 +40,8 @@ module phy_regfile(
     integer k;
 
     generate
-        for(i = 0;i < `READREG_WIDTH;i = i + 1) begin
-            for(j = 0;j < 2;j = j + 1) begin
+        for(i = 0;i < `READREG_WIDTH;i++) begin
+            for(j = 0;j < 2;j++) begin
                 assign phyf_readreg_data[i][j] = data[readreg_phyf_id[i][j]];
                 assign phyf_readreg_data_valid[i][j] = data_valid[readreg_phyf_id[i][j]];
 
@@ -52,12 +52,12 @@ module phy_regfile(
     endgenerate
 
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin: write_signal_generate
-            for(j = 0;j < `WB_WIDTH;j = j + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin: write_signal_generate
+            for(j = 0;j < `WB_WIDTH;j++) begin
                 assign wb_phyf_id_cmp[i][j] = (unsigned'(i) == wb_phyf_id[j]) && wb_phyf_we[j];
             end
 
-            for(j = 0;j < `COMMIT_WIDTH;j = j + 1) begin
+            for(j = 0;j < `COMMIT_WIDTH;j++) begin
                 assign commit_phyf_id_cmp[i][j] = (unsigned'(i) == commit_phyf_id[j]) && commit_phyf_invalid[j];
             end
 

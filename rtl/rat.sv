@@ -79,7 +79,7 @@ module rat(
         
         assign new_phy_id_cnt_temp[0] = map_valid[0] ? 'b0 : 'b1;
 
-        for(i = 1;i < `PHY_REG_NUM;i = i + 1) begin
+        for(i = 1;i < `PHY_REG_NUM;i++) begin
             always_comb begin
                 new_phy_id_temp[i] = new_phy_id_temp[i - 1];
 
@@ -95,7 +95,7 @@ module rat(
     endgenerate
 
     generate
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin
+        for(i = 0;i < `RENAME_WIDTH;i++) begin
             assign rat_rename_new_phy_id[i] = new_phy_id_temp[`PHY_REG_NUM - 1][i];
             assign rat_rename_new_phy_id_valid[i] = i < new_phy_id_cnt_temp[`PHY_REG_NUM - 1];
         end
@@ -103,8 +103,8 @@ module rat(
 
     //get new arch id for every new phy id
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin: new_arch_id_generate
-            for(j = 0;j < `RENAME_WIDTH;j = j + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin: new_arch_id_generate
+            for(j = 0;j < `RENAME_WIDTH;j++) begin
                 assign new_arch_id_cmp[i][j] = (rename_rat_phy_id[j] == unsigned'(i)) && rename_rat_phy_id_valid[j];
             end
 
@@ -167,8 +167,8 @@ module rat(
 
     //get releasing maps
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin: release_phy_id_generate
-            for(j = 0;j < `RENAME_WIDTH;j = j + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin: release_phy_id_generate
+            for(j = 0;j < `RENAME_WIDTH;j++) begin
                 assign release_phy_id_cmp[i][j] = (commit_rat_release_phy_id[j] == i) && commit_rat_release_phy_id_valid[j];
             end
 
@@ -183,8 +183,8 @@ module rat(
 
     //get committing maps
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin: commit_phy_id_generate
-            for(j = 0;j < `RENAME_WIDTH;j = j + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin: commit_phy_id_generate
+            for(j = 0;j < `RENAME_WIDTH;j++) begin
                 assign commit_phy_id_cmp[i][j] = (commit_rat_commit_phy_id[j] == i) && commit_rat_commit_phy_id_valid[j];
             end
 
@@ -199,7 +199,7 @@ module rat(
 
     //update valid property
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin
             always_ff @(posedge clk) begin
                 if(rst) begin
                     if((i >= 1) && (i < `ARCH_REG_NUM)) begin
@@ -230,7 +230,7 @@ module rat(
 
     //update visible property
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin
             always_ff @(posedge clk) begin
                 if(rst) begin
                     if((i >= 1) && (i < `ARCH_REG_NUM)) begin
@@ -260,7 +260,7 @@ module rat(
     endgenerate
 
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin
             always_ff @(posedge clk) begin
                 if(rst) begin
                     if((i >= 1) && (i < `ARCH_REG_NUM)) begin
@@ -281,7 +281,7 @@ module rat(
     endgenerate
 
     generate
-        for(i = 0;i < `PHY_REG_NUM;i = i + 1) begin
+        for(i = 0;i < `PHY_REG_NUM;i++) begin
             always_ff @(posedge clk) begin
                 if(rst) begin
                     if((i >= 1) && (i < `ARCH_REG_NUM)) begin
@@ -299,9 +299,9 @@ module rat(
     endgenerate
 
     generate 
-        for(i = 0;i < `RENAME_WIDTH;i = i + 1) begin: cam_phy_id_generate
+        for(i = 0;i < `RENAME_WIDTH;i++) begin: cam_phy_id_generate
             for(i2 = 0;i2 < 3;i2 = i2 + 1) begin
-                for(j = 0;j < `PHY_REG_NUM;j = j + 1) begin
+                for(j = 0;j < `PHY_REG_NUM;j++) begin
                     assign cam_arch_id_cmp[i][i2][j] = map_valid[j] && map_visible[j] && (map_table[j] == rename_rat_read_arch_id[i][i2]);
                 end
 

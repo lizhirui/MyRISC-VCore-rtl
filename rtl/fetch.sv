@@ -96,12 +96,12 @@ module fetch(
         assign push_forbidden_fence_i[0] = fence_i[0] && ((!decode_feedback_pack.idle) || (!rename_feedback_pack.idle) || commit_feedback_pack.enable || (!stbuf_all_empty));
         assign push_forbidden_jump[0] = 'b0;
 
-        for(i = 1;i < `FETCH_WIDTH;i = i + 1) begin
+        for(i = 1;i < `FETCH_WIDTH;i++) begin
             assign push_forbidden_fence_i[i] = push_forbidden_fence_i[i - 1] || fence_i[i];
             assign push_forbidden_jump[i] = jump[i - 1] || push_forbidden_jump[i - 1];
         end
 
-        for(i = 0;i < `FETCH_WIDTH;i = i + 1) begin
+        for(i = 0;i < `FETCH_WIDTH;i++) begin
             assign cur_pc[i] = pc + (i << 2);
             assign has_exception[i] = !check_align(cur_pc[i], 4);
             assign opcode[i] = has_exception[i] ? 'b0 : bus_fetch_data[`INSTRUCTION_WIDTH * i +: `INSTRUCTION_WIDTH];

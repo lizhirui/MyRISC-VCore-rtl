@@ -88,7 +88,7 @@ module ras #(
     end
 
     generate
-        for(i = 0;i < DEPTH;i++) begin
+        for(i = 0;i < DEPTH - 1;i++) begin
             always_ff @(posedge clk) begin
                 if(rst) begin
                     buffer_cnt[i] <= 'b0;
@@ -102,12 +102,7 @@ module ras #(
                     end
                 end
                 else if(need_throw)begin
-                    if(unsigned'(i) == unsigned'(DEPTH - 1)) begin
-                        buffer_cnt[i] <= 'b1;
-                    end
-                    else begin
-                        buffer_cnt[i] <= buffer_cnt[i + 1];
-                    end
+                    buffer_cnt[i] <= buffer_cnt[i + 1];
                 end
                 else if((unsigned'(i) == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
                     buffer_cnt[i] <= 'b1;
@@ -117,21 +112,39 @@ module ras #(
                 end
             end
         end
+
+        always_ff @(posedge clk) begin
+            if(rst) begin
+                buffer_cnt[DEPTH - 1] <= 'b0;
+            end
+            else if(((DEPTH - 1) == (top_ptr - 'b1)) && (need_cnt_add || need_cnt_sub)) begin
+                if(need_cnt_add) begin
+                    buffer_cnt[DEPTH - 1] <= buffer_cnt[DEPTH - 1] + 'b1;
+                end
+                else begin
+                    buffer_cnt[DEPTH - 1] <= buffer_cnt[DEPTH - 1] - 'b1;
+                end
+            end
+            else if(need_throw)begin
+                buffer_cnt[DEPTH - 1] <= 'b1;
+            end
+            else if(((DEPTH - 1) == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
+                buffer_cnt[DEPTH - 1] <= 'b1;
+            end
+            else if(((DEPTH - 1) == (top_ptr - 'b1)) && bp_ras_push && bp_ras_pop && (bp_ras_addr != buffer[DEPTH - 1])) begin
+                buffer_cnt[DEPTH - 1] <= 'b1;
+            end
+        end
     endgenerate
 
     generate
-        for(i = 0;i < DEPTH;i++) begin
+        for(i = 0;i < DEPTH - 1;i++) begin
             always_ff @(posedge clk) begin
                 if(rst) begin
                     buffer[i] <= 'b0;
                 end
                 else if(need_throw)begin
-                    if(unsigned'(i) == unsigned'(DEPTH - 1)) begin
-                        buffer[i] <= bp_ras_addr;
-                    end
-                    else begin
-                        buffer[i] <= buffer[i + 1];
-                    end
+                    buffer[i] <= buffer[i + 1];
                 end
                 else if((unsigned'(i) == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
                     buffer[i] <= bp_ras_addr;
@@ -139,6 +152,21 @@ module ras #(
                 else if((unsigned'(i) == (top_ptr - 'b1)) && bp_ras_push && bp_ras_pop && (bp_ras_addr != buffer[i]) && (buffer_cnt[i] == 'b1)) begin
                     buffer[i] <= bp_ras_addr;
                 end
+            end
+        end
+
+        always_ff @(posedge clk) begin
+            if(rst) begin
+                buffer[DEPTH - 1] <= 'b0;
+            end
+            else if(need_throw)begin
+                buffer[DEPTH - 1] <= bp_ras_addr;
+            end
+            else if(((DEPTH - 1) == top_ptr) && bp_ras_push && (!bp_ras_pop || (top_ptr != top_ptr_next))) begin
+                buffer[DEPTH - 1] <= bp_ras_addr;
+            end
+            else if(((DEPTH - 1) == (top_ptr - 'b1)) && bp_ras_push && bp_ras_pop && (bp_ras_addr != buffer[DEPTH - 1]) && (buffer_cnt[DEPTH - 1] == 'b1)) begin
+                buffer[DEPTH - 1] <= bp_ras_addr;
             end
         end
     endgenerate

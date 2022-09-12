@@ -35,7 +35,7 @@ module top;
     longint cur_cycle;
     
     tcm #(
-        .IMAGE_PATH("$SIM_ROOT_DIR/image/coremark_10.hex"),
+        .IMAGE_PATH(`SIM_IMAGE_NAME),
         .IMAGE_INIT(1)
     )tcm_inst(.*);
 

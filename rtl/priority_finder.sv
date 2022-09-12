@@ -18,7 +18,7 @@ module priority_finder #(
     assign index_temp[0] = 'd0;
     assign index_valid_temp[0] = data_in[0];
 
-    for(i = 1;i < WIDTH;i = i + 1) begin
+    for(i = 1;i < WIDTH;i++) begin
         if(FIRST_PRIORITY) begin
             assign index_temp[i] = index_valid_temp[i - 1] ? index_temp[i - 1] : i;
             assign index_valid_temp[i] = index_valid_temp[i - 1] ? 'b1 : data_in[i]; 

@@ -15,7 +15,7 @@ else
 endif
 
 cd ../tb/$1/$module/
-set nc_def = ""
+set nc_def = 'SIM_IMAGE_NAME="$SIM_ROOT_DIR/image/'$2'.hex"'
 #set plusargs = "-noupdate"
 set plusargs = ""
 #set multicore = "-mce"
@@ -48,6 +48,7 @@ xrun -64bit \
     $multicore \
     $plusargs \
     $ida_dump \
+    +define+$nc_def \
     -uvmaccess \
     -date \
     -dumpstack \

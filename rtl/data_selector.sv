@@ -17,7 +17,7 @@ module data_selector #(
     genvar i;
 
     generate
-        for(i = 0;i < SEL_WIDTH;i = i + 1) begin
+        for(i = 0;i < SEL_WIDTH;i++) begin
             assign data_in_filter[i] = sel_in[i] ? data_in[i] : 'b0;
 
             if(i == 0) begin

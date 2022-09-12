@@ -207,7 +207,7 @@ module top;
             commit_feedback_pack.flush = tdb.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0);
             eval();
 
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "rename_feedback_pack.idle", 0), rename_feedback_pack.idle);
+            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "rename_feedback_pack.idle", 0), rename_feedback_pack.idle)
 
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "decode_rename_fifo_pop", 0), decode_rename_fifo_pop)
 

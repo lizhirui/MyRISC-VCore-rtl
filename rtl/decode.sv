@@ -56,7 +56,7 @@ module decode(
     assign decode_csrf_decode_rename_fifo_full_add = !decode_rename_fifo_flush && ((decode_rename_fifo_data_in_enable & fetch_decode_fifo_data_out_valid) != fetch_decode_fifo_data_out_valid);
 
     generate
-        for(i = 0;i < `DECODE_WIDTH;i = i + 1) begin
+        for(i = 0;i < `DECODE_WIDTH;i++) begin
             assign op_data[i] = rev_pack[i].value;
             assign opcode[i] = op_data[i][0+:7];
             assign rd[i] = op_data[i][7+:5];

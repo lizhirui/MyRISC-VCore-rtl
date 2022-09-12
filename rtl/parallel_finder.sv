@@ -16,7 +16,7 @@ module parallel_finder #(
     assign index_temp[0] = 'b0;
 
     generate
-        for(i = 1;i < WIDTH;i = i + 1) begin
+        for(i = 1;i < WIDTH;i++) begin
             assign index_temp[i] = index_temp[i - 1] | (data_in[i] ? i : 'b0);
         end
     endgenerate

@@ -68,8 +68,8 @@ module csrfile(
     genvar i, j;
 
     generate
-        for(i = 0;i < CSR_NUM;i = i + 1) begin: csr_write_channel_generate
-            for(j = 0;j < `COMMIT_CSR_CHANNEL_NUM;j = j + 1) begin
+        for(i = 0;i < CSR_NUM;i++) begin: csr_write_channel_generate
+            for(j = 0;j < `COMMIT_CSR_CHANNEL_NUM;j++) begin
                 assign csr_write_channel_cmp[i][j] = (commit_csrf_write_addr[j] == unsigned'(i)) && commit_csrf_we[j];
             end
 
@@ -98,7 +98,7 @@ module csrfile(
     assign csrf_excsr_data = csr_read_data[excsr_csrf_addr];
 
     generate
-        for(i = 0;i < `COMMIT_CSR_CHANNEL_NUM;i = i + 1) begin
+        for(i = 0;i < `COMMIT_CSR_CHANNEL_NUM;i++) begin
             assign csrf_commit_read_data[i] = csr_read_data[commit_csrf_read_addr[i]];
         end
     endgenerate
@@ -120,7 +120,7 @@ module csrfile(
     assign csr_fnf_next = {csr_file[`CSR_FNFH], csr_file[`CSR_FNF]} + fetch_csrf_fetch_not_full_add;
 
     generate
-        for(i = 0;i < CSR_NUM;i = i + 1) begin
+        for(i = 0;i < CSR_NUM;i++) begin
             always_ff @(posedge clk) begin
                 if(rst) begin
                     case(i)
@@ -288,7 +288,7 @@ module csrfile(
     endgenerate
 
     generate
-        for(i = 0;i < CSR_NUM;i = i + 1) begin
+        for(i = 0;i < CSR_NUM;i++) begin
             assign csr_read_data[i] = csr_file[i];
         end
     endgenerate

@@ -119,18 +119,18 @@ module top;
             for(i = 0;i < `READREG_WIDTH;i++) begin
                 for(j = 0;j < 2;j++) begin
                     if(tdb.get_uint8(DOMAIN_INPUT, "readreg_phyf_id", i * 2 + j) != 255) begin
-                        `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "phyf_readreg_data_valid", i * 2 + j), phyf_readreg_data_valid[i][j]);
+                        `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "phyf_readreg_data_valid", i * 2 + j), phyf_readreg_data_valid[i][j])
 
                         if(phyf_readreg_data_valid[i][j]) begin
-                            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "phyf_readreg_data", i * 2 + j), phyf_readreg_data[i][j]);
+                            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "phyf_readreg_data", i * 2 + j), phyf_readreg_data[i][j])
                         end
                     end
                     
                     if(tdb.get_uint8(DOMAIN_INPUT, "issue_phyf_id", i * 2 + j) != 255) begin
-                        `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "phyf_issue_data_valid", i * 2 + j), phyf_issue_data_valid[i][j]);
+                        `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "phyf_issue_data_valid", i * 2 + j), phyf_issue_data_valid[i][j])
 
                         if(phyf_issue_data_valid[i][j]) begin
-                            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "phyf_issue_data", i * 2 + j), phyf_issue_data[i][j]);
+                            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "phyf_issue_data", i * 2 + j), phyf_issue_data[i][j])
                         end
                     end
                 end

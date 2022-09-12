@@ -66,14 +66,28 @@ module tcm #(
 
     genvar i, j;
 
-    generate
-        if(IMAGE_INIT) begin
-            initial begin
-                $readmemh(IMAGE_PATH, fetch_mem);
-                $readmemh(IMAGE_PATH, stbuf_mem);
+    `ifdef VCS_SIMULATOR
+        logic[7:0] fetch_mem_copy[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
+        logic[7:0] stbuf_mem_copy[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
+
+        generate
+            if(IMAGE_INIT) begin
+                initial begin
+                    $readmemh(IMAGE_PATH, fetch_mem_copy);
+                    $readmemh(IMAGE_PATH, stbuf_mem_copy);
+                end
             end
-        end
-    endgenerate
+        endgenerate
+    `else
+        generate
+            if(IMAGE_INIT) begin
+                initial begin
+                    $readmemh(IMAGE_PATH, fetch_mem);
+                    $readmemh(IMAGE_PATH, stbuf_mem);
+                end
+            end
+        endgenerate
+    `endif
 
     always_ff @(posedge clk) begin
         if(rst) begin
@@ -94,12 +108,12 @@ module tcm #(
     end
 
     generate
-        for(i = 0;i < BANK_NUM;i = i + 1) begin
+        for(i = 0;i < BANK_NUM;i++) begin
             assign fetch_full_addr_set[i] = bus_tcm_fetch_addr + unsigned'(i);
             assign fetch_full_addr_set_r[i] = bus_tcm_fetch_addr_r + unsigned'(i);
             assign fetch_bank_addr_set[i] = fetch_full_addr_set[i][`ADDR_WIDTH - 1:BANK_ADDR_WIDTH];
 
-            for(j = 0;j < BANK_NUM;j = j + 1) begin
+            for(j = 0;j < BANK_NUM;j++) begin
                 assign fetch_bank_id_cmp[i][j] = fetch_full_addr_set[j][BANK_ADDR_WIDTH - 1:0] == unsigned'(i);
                 assign fetch_bank_id_cmp_r[i][j] = fetch_full_addr_set_r[j][BANK_ADDR_WIDTH - 1:0] == unsigned'(i);
             end
@@ -130,19 +144,24 @@ module tcm #(
             end
 
             assign fetch_bank_data_reg_shift[i] = ($clog2(`BUS_DATA_WIDTH)'(fetch_bank_set_index[i])) << 3;
-            assign fetch_bank_data_recombine[i] = ((i != 0) ? fetch_bank_data_recombine[i - 1] : 'b0) | (fetch_bank_data_reg[i] << fetch_bank_data_reg_shift[i]);
+        end
+
+        assign fetch_bank_data_recombine[0] = (fetch_bank_data_reg[0] << fetch_bank_data_reg_shift[0]);
+
+        for(i = 1;i < BANK_NUM;i++) begin
+            assign fetch_bank_data_recombine[i] = fetch_bank_data_recombine[i - 1] | (fetch_bank_data_reg[i] << fetch_bank_data_reg_shift[i]);
         end
     endgenerate
 
     assign tcm_bus_fetch_data = fetch_bank_data_recombine[BANK_NUM - 1];
 
     generate
-        for(i = 0;i < BANK_NUM;i = i + 1) begin
+        for(i = 0;i < BANK_NUM;i++) begin
             assign stbuf_read_full_addr_set[i] = bus_tcm_stbuf_read_addr + unsigned'(i);
             assign stbuf_read_full_addr_set_r[i] = bus_tcm_stbuf_read_addr_r + unsigned'(i);
             assign stbuf_read_bank_addr_set[i] = stbuf_read_full_addr_set[i][`ADDR_WIDTH - 1:BANK_ADDR_WIDTH];
 
-            for(j = 0;j < BANK_NUM;j = j + 1) begin
+            for(j = 0;j < BANK_NUM;j++) begin
                 assign stbuf_read_bank_id_cmp[i][j] = stbuf_read_full_addr_set[j][BANK_ADDR_WIDTH - 1:0] == unsigned'(i);
                 assign stbuf_read_bank_id_cmp_r[i][j] = stbuf_read_full_addr_set_r[j][BANK_ADDR_WIDTH - 1:0] == unsigned'(i);
             end
@@ -173,7 +192,12 @@ module tcm #(
             end
 
             assign stbuf_read_bank_data_reg_shift[i] = ($clog2(`BUS_DATA_WIDTH)'(stbuf_read_bank_set_index[i])) << 3;
-            assign stbuf_read_bank_data_recombine[i] = ((i != 0) ? stbuf_read_bank_data_recombine[i - 1] : 'b0) | (stbuf_read_bank_data_reg[i] << stbuf_read_bank_data_reg_shift[i]);
+        end
+
+        assign stbuf_read_bank_data_recombine[0] = (stbuf_read_bank_data_reg[0] << stbuf_read_bank_data_reg_shift[0]);
+
+        for(i = 1;i < BANK_NUM;i++) begin
+            assign stbuf_read_bank_data_recombine[i] = stbuf_read_bank_data_recombine[i - 1] | (stbuf_read_bank_data_reg[i] << stbuf_read_bank_data_reg_shift[i]);
         end
     endgenerate
 
@@ -194,18 +218,25 @@ module tcm #(
     end
 
     generate
-        for(i = 0;i < BANK_NUM;i = i + 1) begin
+        for(i = 0;i < BANK_NUM;i++) begin
             assign stbuf_set_we[i] = stbuf_set_we_flatten[i];
-            assign stbuf_set_write_data[i] = ((i * 8 + 8) <= `REG_DATA_WIDTH) ? bus_tcm_stbuf_data[i * 8+:8] : 'b0;
+        end
+
+        for(i = 0;i < `REG_DATA_WIDTH / 8;i++) begin
+            assign stbuf_set_write_data[i] = bus_tcm_stbuf_data[i * 8+:8];
+        end
+
+        for(i = `REG_DATA_WIDTH / 8;i < BANK_NUM;i++) begin
+            assign stbuf_set_write_data[i] = 'b0;
         end
     endgenerate
 
     generate
-        for(i = 0;i < BANK_NUM;i = i + 1) begin
+        for(i = 0;i < BANK_NUM;i++) begin
             assign stbuf_write_full_addr_set[i] = bus_tcm_stbuf_write_addr + i;
             assign stbuf_write_bank_addr_set[i] = stbuf_write_full_addr_set[i][`ADDR_WIDTH - 1:BANK_ADDR_WIDTH];
 
-            for(j = 0;j < BANK_NUM;j = j + 1) begin
+            for(j = 0;j < BANK_NUM;j++) begin
                 assign stbuf_write_bank_id_cmp[i][j] = stbuf_write_full_addr_set[j][BANK_ADDR_WIDTH - 1:0] == unsigned'(i);
             end
 
@@ -236,12 +267,25 @@ module tcm #(
                 .data_out(stbuf_bank_write_data[i])
             );
 
-            always_ff @(posedge clk) begin
-                if(stbuf_bank_we[i]) begin
-                    stbuf_mem[i][stbuf_write_bank_addr[i]] <= stbuf_bank_write_data[i];
-                    fetch_mem[i][stbuf_write_bank_addr[i]] <= stbuf_bank_write_data[i];
+            `ifdef VCS_SIMULATOR
+                always_ff @(posedge clk) begin
+                    if(rst) begin
+                        stbuf_mem[i] <= stbuf_mem_copy[i];
+                        fetch_mem[i] <= fetch_mem_copy[i];
+                    end
+                    if(stbuf_bank_we[i]) begin
+                        stbuf_mem[i][stbuf_write_bank_addr[i]] <= stbuf_bank_write_data[i];
+                        fetch_mem[i][stbuf_write_bank_addr[i]] <= stbuf_bank_write_data[i];
+                    end
                 end
-            end
+            `else
+                always_ff @(posedge clk) begin
+                    if(stbuf_bank_we[i]) begin
+                        stbuf_mem[i][stbuf_write_bank_addr[i]] <= stbuf_bank_write_data[i];
+                        fetch_mem[i][stbuf_write_bank_addr[i]] <= stbuf_bank_write_data[i];
+                    end
+                end
+            `endif
         end
     endgenerate
 endmodule
