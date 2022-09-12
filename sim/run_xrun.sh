@@ -53,6 +53,7 @@ xrun -64bit \
     -date \
     -dumpstack \
     -negdelay \
+    -xprop C -xverbose -XPELSA -xfile $SIM_ROOT_DIR/sim/xfile.txt \
     -nowarn CUVWSP \
     -nowarn DSEMEL \
     -nowarn RNDXCELON \

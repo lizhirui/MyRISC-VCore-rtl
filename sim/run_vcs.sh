@@ -25,6 +25,7 @@ set notiming = "+notimingcheck";
 set coverage_opts = ''; 
 set assert_opts = '';
 #set optconfig='-debug_all -j'
+#set optconfig='-simprofile'
 set optconfig=''
 
 set OS=`uname -s`
@@ -38,9 +39,11 @@ switch ($OS)
    breaksw
 endsw
 
-vcs -full64 -fsdb  \
-    -line   \
-    +vcsd   \
+#    -fsdb   \
+#    -line   \
+#    +vcsd   \
+
+vcs -full64  \
     +vpi    \
     $fsdb_opts \
     +plusarg_save    \

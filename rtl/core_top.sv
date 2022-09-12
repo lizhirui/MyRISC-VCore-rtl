@@ -1,7 +1,10 @@
 `include "config.svh"
 `include "common.svh"
 
-module core_top(
+module core_top#(
+        parameter IMAGE_PATH = "",
+        parameter IMAGE_INIT = 0
+    )(
         input logic clk,
         input logic rst,
 
@@ -9,46 +12,13 @@ module core_top(
         output logic[`REG_DATA_WIDTH - 1:0] mepc_value
     );
 
-    logic[`ADDR_WIDTH -1:0] fetch_bp_pc;
-    logic[`INSTRUCTION_WIDTH - 1:0] fetch_bp_instruction;
-    logic fetch_bp_valid;
-    logic bp_fetch_jump;
-    logic[`ADDR_WIDTH - 1:0] bp_fetch_next_pc;
-    logic bp_fetch_valid;
-    logic[`GSHARE_GLOBAL_HISTORY_WIDTH - 1:0] bp_fetch_global_history;
-    logic[`LOCAL_BHT_WIDTH - 1:0] bp_fetch_local_history; 
-
-    logic[`ADDR_WIDTH -1:0] fetch_bp_update_pc;
-    logic[`INSTRUCTION_WIDTH - 1:0] fetch_bp_update_instruction;
-    logic fetch_bp_update_jump;
-    logic[`ADDR_WIDTH - 1:0] fetch_bp_update_next_pc;
-    logic fetch_bp_update_valid;
-
+    //branch_predictor<->ras
     logic[`ADDR_WIDTH - 1:0] bp_ras_addr;
     logic bp_ras_push;
     logic[`ADDR_WIDTH - 1:0] ras_bp_addr;
     logic bp_ras_pop;
 
-    checkpoint_t exbru_bp_cp;
-    logic[`ADDR_WIDTH -1:0] exbru_bp_pc;
-    logic[`INSTRUCTION_WIDTH - 1:0] exbru_bp_instruction;
-    logic exbru_bp_jump;
-    logic[`ADDR_WIDTH - 1:0] exbru_bp_next_pc;
-    logic exbru_bp_hit;
-    logic exbru_bp_valid;
-
-    logic[`ADDR_WIDTH -1:0] commit_bp_pc[0:`COMMIT_WIDTH - 1];
-    logic[`INSTRUCTION_WIDTH - 1:0] commit_bp_instruction[0:`COMMIT_WIDTH - 1];
-    logic[`COMMIT_WIDTH - 1:0] commit_bp_jump;
-    logic[`ADDR_WIDTH - 1:0] commit_bp_next_pc[0:`COMMIT_WIDTH - 1];
-    logic[`COMMIT_WIDTH - 1:0] commit_bp_hit;
-    logic[`COMMIT_WIDTH - 1:0] commit_bp_valid;
-
-    logic[`ADDR_WIDTH - 1:0] fetch_bus_addr;
-    logic[`ADDR_WIDTH - 1:0] fetch_bus_read_req;
-    logic[`INSTRUCTION_WIDTH * `FETCH_WIDTH - 1:0] bus_fetch_data;
-    logic bus_fetch_read_ack;
-
+    //bus<->store_buffer
     logic[`ADDR_WIDTH - 1:0] stbuf_bus_read_addr;
     logic[`ADDR_WIDTH - 1:0] stbuf_bus_write_addr;
     logic[`SIZE_WIDTH - 1:0] stbuf_bus_read_size;
@@ -60,6 +30,7 @@ module core_top(
     logic bus_stbuf_read_ack;
     logic bus_stbuf_write_ack;
 
+    //bus<->tcm
     logic[`ADDR_WIDTH - 1:0] bus_tcm_fetch_addr;
     logic bus_tcm_fetch_rd;
     logic[`BUS_DATA_WIDTH - 1:0] tcm_bus_fetch_data;
@@ -73,6 +44,7 @@ module core_top(
     logic bus_tcm_stbuf_wr;
     logic[`BUS_DATA_WIDTH - 1:0] tcm_bus_stbuf_data;
 
+    //bus<->clint
     logic[`ADDR_WIDTH - 1:0] bus_clint_read_addr;
     logic[`ADDR_WIDTH - 1:0] bus_clint_write_addr;
     logic[`SIZE_WIDTH - 1:0] bus_clint_read_size;
@@ -82,41 +54,379 @@ module core_top(
     logic bus_clint_wr;
     logic[`BUS_DATA_WIDTH - 1:0] clint_bus_data;
 
+    //clint<->all
+    logic all_intif_int_software_req;
+    logic all_intif_int_timer_req;
+
+    //csrfile<->interrupt_interface
+    logic[`REG_DATA_WIDTH - 1:0] intif_csrf_mip_data;
+
+    //csrfile<->all
+    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mie_data;
+    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mstatus_data;
+    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mip_data;
+    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mepc_data;
+
+    //csrfile<->ras
+    logic ras_csrf_ras_full_add;
+
+    //execute_feedback_pack<->all
+    execute_feedback_pack_t execute_feedback_pack;
+
+    //interrupt_interface<->all
+    logic all_intif_int_ext_req;
+    logic all_intif_int_software_req;
+    logic all_intif_int_timer_req;
+
+    logic intif_all_int_ext_ack;
+    logic intif_all_int_software_ack;
+    logic intif_all_int_timer_ack;
+
+    //store_buffer<->all
+    logic stbuf_all_empty;
+
+    //fetch<->branch_predictor
+    logic[`ADDR_WIDTH -1:0] fetch_bp_update_pc;
+    logic[`INSTRUCTION_WIDTH - 1:0] fetch_bp_update_instruction;
+    logic fetch_bp_update_jump;
+    logic[`ADDR_WIDTH - 1:0] fetch_bp_update_next_pc;
+    logic fetch_bp_update_valid;
+
+    logic[`ADDR_WIDTH -1:0] fetch_bp_pc;
+    logic[`INSTRUCTION_WIDTH - 1:0] fetch_bp_instruction;
+    logic fetch_bp_valid;
+    logic bp_fetch_jump;
+    logic[`ADDR_WIDTH - 1:0] bp_fetch_next_pc;
+    logic bp_fetch_valid;
+    logic[`GSHARE_GLOBAL_HISTORY_WIDTH - 1:0] bp_fetch_global_history;
+    logic[`LOCAL_BHT_WIDTH - 1:0] bp_fetch_local_history; 
+
+    //fetch<->bus
+    logic[`ADDR_WIDTH - 1:0] fetch_bus_addr;
+    logic[`ADDR_WIDTH - 1:0] fetch_bus_read_req;
+    logic[`INSTRUCTION_WIDTH * `FETCH_WIDTH - 1:0] bus_fetch_data;
+    logic bus_fetch_read_ack;
+
+    //fetch<->csrfile
+    logic fetch_csrf_checkpoint_buffer_full_add;
+    logic fetch_csrf_fetch_not_full_add;
+    logic fetch_csrf_fetch_decode_fifo_full_add;
+
+    //fetch<->checkpoint_buffer
     logic[`CHECKPOINT_ID_WIDTH - 1:0] cpbuf_fetch_new_id;
     logic cpbuf_fetch_new_id_valid;
     checkpoint_t fetch_cpbuf_data;
     logic fetch_cpbuf_push;
 
+    //fetch<->fetch_decode_fifo
+    logic[`FETCH_WIDTH - 1:0] fetch_decode_fifo_data_in_enable;
+    fetch_decode_pack_t fetch_decode_fifo_data_in[0:`FETCH_WIDTH - 1];
+    logic[`FETCH_WIDTH - 1:0] fetch_decode_fifo_data_in_valid;
+    logic fetch_decode_fifo_push;
+    logic fetch_decode_fifo_flush;
+
+    //decode<->csrfile
+    logic decode_csrf_decode_rename_fifo_full_add;
+
+    //decode<->fetch_decode_fifo
+    fetch_decode_pack_t fetch_decode_fifo_data_out[0:`DECODE_WIDTH - 1];
+    logic[`DECODE_WIDTH - 1:0] fetch_decode_fifo_data_out_valid;
+    logic[`DECODE_WIDTH - 1:0] fetch_decode_fifo_data_pop_valid;
+    logic fetch_decode_fifo_pop;
+
+    //decode<->decode_rename_fifo
+    logic[`DECODE_WIDTH - 1:0] decode_rename_fifo_data_in_enable;
+    decode_rename_pack_t decode_rename_fifo_data_in[0:`DECODE_WIDTH - 1];
+    logic[`DECODE_WIDTH - 1:0] decode_rename_fifo_data_in_valid;
+    logic decode_rename_fifo_push;
+    logic decode_rename_fifo_flush;
+
+    //decode<->all
+    decode_feedback_pack_t decode_feedback_pack;
+
+    //rename<->checkpoint_buffer
     logic[`CHECKPOINT_ID_WIDTH - 1:0] rename_cpbuf_id[0:`RENAME_WIDTH - 1];
     checkpoint_t rename_cpbuf_data[0:`RENAME_WIDTH - 1];
     logic[`RENAME_WIDTH - 1:0] rename_cpbuf_we;
     checkpoint_t cpbuf_rename_data[0:`RENAME_WIDTH - 1];
 
+    //rename<->rat
+    logic[`PHY_REG_ID_WIDTH - 1:0] rat_rename_new_phy_id[0:`RENAME_WIDTH - 1];
+    logic[`RENAME_WIDTH - 1:0] rat_rename_new_phy_id_valid;
+    logic[`PHY_REG_ID_WIDTH - 1:0] rename_rat_phy_id[0:`RENAME_WIDTH - 1];
+    logic[`RENAME_WIDTH - 1:0] rename_rat_phy_id_valid;
+    logic[`ARCH_REG_ID_WIDTH - 1:0] rename_rat_arch_id[0:`RENAME_WIDTH - 1];
+    logic rename_rat_map;
+
+    logic[`PHY_REG_NUM - 1:0] rat_rename_map_table_valid;
+    logic[`PHY_REG_NUM - 1:0] rat_rename_map_table_visible;
+
+    logic[`ARCH_REG_ID_WIDTH - 1:0] rename_rat_read_arch_id[0:`RENAME_WIDTH - 1][0:2];
+    logic[`PHY_REG_ID_WIDTH - 1:0] rat_rename_read_phy_id[0:`RENAME_WIDTH - 1][0:2];
+
+    //rename<->rob
+    logic[`ROB_ID_WIDTH - 1:0] rob_rename_new_id[0:`RENAME_WIDTH - 1];
+    logic[`RENAME_WIDTH - 1:0] rob_rename_new_id_valid;
+
+    rob_item_t rename_rob_data[0:`RENAME_WIDTH - 1];
+    logic[`RENAME_WIDTH - 1:0] rename_rob_data_valid;
+    logic rename_rob_push;
+
+    //rename<->csrfile
+    logic rename_csrf_phy_regfile_full_add;
+    logic rename_csrf_rob_full_add;
+
+    //rename<->decode_rename_fifo
+    decode_rename_pack_t decode_rename_fifo_data_out[0:`RENAME_WIDTH - 1];
+    logic[`RENAME_WIDTH - 1:0] decode_rename_fifo_data_out_valid;
+    logic[`RENAME_WIDTH - 1:0] decode_rename_fifo_data_pop_valid;
+    logic decode_rename_fifo_pop;
+
+    //rename<->rename_readreg_port
+    rename_readreg_pack_t rename_readreg_port_data_in;
+    logic rename_readreg_port_we;
+    logic rename_readreg_port_flush;
+
+    //rename<->all
+    rename_feedback_pack_t rename_feedback_pack;
+
+    //readreg<->phy_regfile
+    logic[`PHY_REG_ID_WIDTH - 1:0] readreg_phyf_id[0:`READREG_WIDTH - 1][0:1];
+    logic[`REG_DATA_WIDTH - 1:0] phyf_readreg_data[0:`READREG_WIDTH - 1][0:1];
+    logic phyf_readreg_data_valid[0:`READREG_WIDTH - 1][0:1];
+
+    //readreg<->rename_readreg_port
+    rename_readreg_pack_t rename_readreg_port_data_out;
+
+    //readreg<->readreg_issue_port
+    readreg_issue_pack_t readreg_issue_port_data_in;
+    logic readreg_issue_port_we;
+    logic readreg_issue_port_flush;
+
+    //issue<->phy_regfile
+    logic[`PHY_REG_ID_WIDTH - 1:0] issue_phyf_id[0:`READREG_WIDTH - 1][0:1];
+    logic[`REG_DATA_WIDTH - 1:0] phyf_issue_data[0:`READREG_WIDTH - 1][0:1];
+    logic phyf_issue_data_valid[0:`READREG_WIDTH - 1][0:1];
+
+    //issue<->store_buffer
+    logic[`ADDR_WIDTH - 1:0] issue_stbuf_read_addr;
+    logic[`SIZE_WIDTH - 1:0] issue_stbuf_read_size;
+    logic issue_stbuf_rd;
+
+    //issue<->csrfile
+    logic issue_csrf_issue_execute_fifo_full_add;
+    logic issue_csrf_issue_queue_full_add;
+
+    //issue<->readreg_issue_port
+    readreg_issue_pack_t readreg_issue_port_data_out;
+
+    //issue<->issue_alu_fifo
+    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_full;
+    issue_execute_pack_t issue_alu_fifo_data_in[0:`ALU_UNIT_NUM - 1];
+    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_push;
+    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_flush;
+
+    //issue<->issue_bru_fifo
+    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_full;
+    issue_execute_pack_t issue_bru_fifo_data_in[0:`BRU_UNIT_NUM - 1];
+    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_push;
+    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_flush;
+
+    //issue<->issue_csr_fifo
+    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_full;
+    issue_execute_pack_t issue_csr_fifo_data_in[0:`CSR_UNIT_NUM - 1];
+    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_push;
+    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_flush;
+
+    //issue<->issue_div_fifo
+    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_full;
+    issue_execute_pack_t issue_div_fifo_data_in[0:`DIV_UNIT_NUM - 1];
+    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_push;
+    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_flush;
+
+    //issue<->issue_lsu_fifo
+    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_full;
+    issue_execute_pack_t issue_lsu_fifo_data_in[0:`LSU_UNIT_NUM - 1];
+    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_push;
+    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_flush;
+
+    //issue<->issue_mul_fifo
+    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_full;
+    issue_execute_pack_t issue_mul_fifo_data_in[0:`MUL_UNIT_NUM - 1];
+    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_push;
+    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_flush;
+
+    //issue<->all
+    issue_feedback_pack_t issue_feedback_pack;
+
+    //execute_alu<->issue_execute_alu_fifo
+    issue_execute_pack_t issue_alu_fifo_data_out[0:`ALU_UNIT_NUM - 1];
+    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_data_out_valid;
+    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_pop;
+
+    //execute_alu<->execute_alu_wb_port
+    execute_wb_pack_t alu_wb_port_data_in[0:`ALU_UNIT_NUM - 1];
+    logic[`ALU_UNIT_NUM - 1:0] alu_wb_port_we;
+    logic[`ALU_UNIT_NUM - 1:0] alu_wb_port_flush;
+
+    //execute_alu<->execute_feedback
+    execute_feedback_channel_t alu_execute_channel_feedback_pack[0:`ALU_UNIT_NUM - 1];
+
+    //execute_bru<->checkpoint_buffer
     logic[`CHECKPOINT_ID_WIDTH - 1:0] exbru_cpbuf_id;
     checkpoint_t cpbuf_exbru_data;
 
-    logic[`CHECKPOINT_ID_WIDTH - 1:0] commit_cpbuf_id[0:`COMMIT_WIDTH - 1];
-    checkpoint_t cpbuf_commit_data[0:`COMMIT_WIDTH - 1];
-    logic[`COMMIT_WIDTH - 1:0] commit_cpbuf_pop;
-    logic commit_cpbuf_flush;
+    //execute_bru<->branch_predictor
+    checkpoint_t exbru_bp_cp;
+    logic[`ADDR_WIDTH -1:0] exbru_bp_pc;
+    logic[`INSTRUCTION_WIDTH - 1:0] exbru_bp_instruction;
+    logic exbru_bp_jump;
+    logic[`ADDR_WIDTH - 1:0] exbru_bp_next_pc;
+    logic exbru_bp_hit;
+    logic exbru_bp_valid;
 
-    logic all_intif_int_software_req;
-    logic all_intif_int_timer_req;
+    //execute_bru<->issue_execute_bru_fifo
+    issue_execute_pack_t issue_bru_fifo_data_out[0:`BRU_UNIT_NUM - 1];
+    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_data_out_valid;
+    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_pop;
 
+    //execute_bru<->execute_bru_wb_port
+    execute_wb_pack_t bru_wb_port_data_in[0:`BRU_UNIT_NUM - 1];
+    logic[`BRU_UNIT_NUM - 1:0] bru_wb_port_we;
+    logic[`BRU_UNIT_NUM - 1:0] bru_wb_port_flush;
+
+    //execute_bru<->execute_feedback
+    execute_feedback_channel_t bru_execute_channel_feedback_pack[0:`BRU_UNIT_NUM - 1];
+
+    //execute_csr<->csrfile
+    logic[`CSR_ADDR_WIDTH - 1:0] excsr_csrf_addr;
+    logic[`REG_DATA_WIDTH - 1:0] csrf_excsr_data;
+
+    //execute_csr<->issue_execute_csr_fifo
+    issue_execute_pack_t issue_csr_fifo_data_out[0:`CSR_UNIT_NUM - 1];
+    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_data_out_valid;
+    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_pop;
+
+    //execute_csr<->execute_csr_wb_port
+    execute_wb_pack_t csr_wb_port_data_in[0:`CSR_UNIT_NUM - 1];
+    logic[`CSR_UNIT_NUM - 1:0] csr_wb_port_we;
+    logic[`CSR_UNIT_NUM - 1:0] csr_wb_port_flush;
+
+    //execute_csr<->execute_feedback
+    execute_feedback_channel_t csr_execute_channel_feedback_pack[0:`CSR_UNIT_NUM - 1];
+
+    //execute_div<->issue_execute_div_fifo
+    issue_execute_pack_t issue_div_fifo_data_out[0:`DIV_UNIT_NUM - 1];
+    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_data_out_valid;
+    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_pop;
+
+    //execute_div<->execute_div_wb_port
+    execute_wb_pack_t div_wb_port_data_in[0:`DIV_UNIT_NUM - 1];
+    logic[`DIV_UNIT_NUM - 1:0] div_wb_port_we;
+    logic[`DIV_UNIT_NUM - 1:0] div_wb_port_flush;
+
+    //execute_div<->execute_feedback
+    execute_feedback_channel_t div_execute_channel_feedback_pack[0:`DIV_UNIT_NUM - 1];
+
+    //execute_lsu<->store_buffer
+    logic[`BUS_DATA_WIDTH - 1:0] stbuf_exlsu_bus_data;
+    logic[`BUS_DATA_WIDTH - 1:0] stbuf_exlsu_bus_data_feedback;
+    logic stbuf_exlsu_bus_ready;
+
+    logic[`ROB_ID_WIDTH - 1:0] exlsu_stbuf_rob_id;
+    logic[`ADDR_WIDTH - 1:0] exlsu_stbuf_write_addr;
+    logic[`SIZE_WIDTH - 1:0] exlsu_stbuf_write_size;
+    logic[`BUS_DATA_WIDTH - 1:0] exlsu_stbuf_write_data;
+    logic exlsu_stbuf_push;
+    logic stbuf_exlsu_full;
+
+    //execute_lsu<->issue_execute_lsu_fifo
+    issue_execute_pack_t issue_lsu_fifo_data_out[0:`LSU_UNIT_NUM - 1];
+    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_data_out_valid;
+    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_pop;
+
+    //execute_lsu<->execute_lsu_wb_port
+    execute_wb_pack_t lsu_wb_port_data_in[0:`LSU_UNIT_NUM - 1];
+    logic[`LSU_UNIT_NUM - 1:0] lsu_wb_port_we;
+    logic[`LSU_UNIT_NUM - 1:0] lsu_wb_port_flush;
+
+    //execute_lsu<->execute_feedback
+    execute_feedback_channel_t lsu_execute_channel_feedback_pack[0:`LSU_UNIT_NUM - 1];
+
+    //execute_mul<->issue_execute_mul_fifo
+    issue_execute_pack_t issue_mul_fifo_data_out[0:`MUL_UNIT_NUM - 1];
+    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_data_out_valid;
+    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_pop;
+
+    //execute_mul<->execute_mul_wb_port
+    execute_wb_pack_t mul_wb_port_data_in[0:`MUL_UNIT_NUM - 1];
+    logic[`MUL_UNIT_NUM - 1:0] mul_wb_port_we;
+    logic[`MUL_UNIT_NUM - 1:0] mul_wb_port_flush;
+
+    //execute_mul<->execute_feedback
+    execute_feedback_channel_t mul_execute_channel_feedback_pack[0:`MUL_UNIT_NUM - 1];
+
+    //wb<->phy_regfile
+    logic[`PHY_REG_ID_WIDTH - 1:0] wb_phyf_id[0:`WB_WIDTH - 1];
+    logic[`REG_DATA_WIDTH - 1:0] wb_phyf_data[0:`WB_WIDTH - 1];
+    logic[`WB_WIDTH - 1:0] wb_phyf_we;
+
+    //wb<->execute_alu_wb_port
+    execute_wb_pack_t alu_wb_port_data_out[0:`ALU_UNIT_NUM - 1];
+
+    //wb<->execute_bru_wb_port
+    execute_wb_pack_t bru_wb_port_data_out[0:`BRU_UNIT_NUM - 1];
+
+    //wb<->execute_csr_wb_port
+    execute_wb_pack_t csr_wb_port_data_out[0:`CSR_UNIT_NUM - 1];
+
+    //wb<->execute_div_wb_port
+    execute_wb_pack_t div_wb_port_data_out[0:`DIV_UNIT_NUM - 1];
+
+    //wb<->execute_lsu_wb_port
+    execute_wb_pack_t lsu_wb_port_data_out[0:`LSU_UNIT_NUM - 1];
+
+    //wb<->execute_mul_wb_port
+    execute_wb_pack_t mul_wb_port_data_out[0:`MUL_UNIT_NUM - 1];
+
+    //wb<->wb_commit_port
+    wb_commit_pack_t wb_commit_port_data_in;
+    logic wb_commit_port_we;
+    logic wb_commit_port_flush;
+
+    //wb<->all
+    wb_feedback_pack_t wb_feedback_pack;
+
+    //commit<->interrupt_interface
     logic intif_commit_has_interrupt;
     logic[`REG_DATA_WIDTH - 1:0] intif_commit_mcause_data;
     logic[`REG_DATA_WIDTH - 1:0] intif_commit_ack_data;
     logic[`REG_DATA_WIDTH - 1:0] commit_intif_ack_data;
 
+    //commit<->branch_predictor
+    logic[`ADDR_WIDTH -1:0] commit_bp_pc[0:`COMMIT_WIDTH - 1];
+    logic[`INSTRUCTION_WIDTH - 1:0] commit_bp_instruction[0:`COMMIT_WIDTH - 1];
+    logic[`COMMIT_WIDTH - 1:0] commit_bp_jump;
+    logic[`ADDR_WIDTH - 1:0] commit_bp_next_pc[0:`COMMIT_WIDTH - 1];
+    logic[`COMMIT_WIDTH - 1:0] commit_bp_hit;
+    logic[`COMMIT_WIDTH - 1:0] commit_bp_valid;
+
+    //commit<->checkpoint_buffer
+    logic[`CHECKPOINT_ID_WIDTH - 1:0] commit_cpbuf_id[0:`COMMIT_WIDTH - 1];
+    checkpoint_t cpbuf_commit_data[0:`COMMIT_WIDTH - 1];
+    logic[`COMMIT_WIDTH - 1:0] commit_cpbuf_pop;
+    logic commit_cpbuf_flush;
+
+    //commit<->rat
     logic[`PHY_REG_NUM - 1:0] commit_rat_map_table_valid;
     logic[`PHY_REG_NUM - 1:0] commit_rat_map_table_visible;
     logic commit_rat_map_table_restore;
 
-    logic[`PHY_REG_NUM - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1];
+    logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_release_phy_id[0:`COMMIT_WIDTH - 1];
     logic[`COMMIT_WIDTH - 1:0] commit_rat_release_phy_id_valid;
     logic commit_rat_release_map;
 
-    logic[`PHY_REG_NUM - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1];
+    logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_commit_phy_id[0:`COMMIT_WIDTH - 1];
     logic[`COMMIT_WIDTH - 1:0] commit_rat_commit_phy_id_valid;
     logic commit_rat_commit_map;
 
@@ -124,13 +434,12 @@ module core_top(
     logic[`PHY_REG_ID_WIDTH - 1:0] commit_rat_restore_old_phy_id;
     logic commit_rat_restore_map;
 
+    //commit<->csrfile
     logic[`CSR_ADDR_WIDTH - 1:0] commit_csrf_read_addr[0:`COMMIT_CSR_CHANNEL_NUM - 1];
     logic[`REG_DATA_WIDTH - 1:0] csrf_commit_read_data[0:`COMMIT_CSR_CHANNEL_NUM - 1];
     logic[`CSR_ADDR_WIDTH - 1:0] commit_csrf_write_addr[0:`COMMIT_CSR_CHANNEL_NUM - 1];
     logic[`REG_DATA_WIDTH - 1:0] commit_csrf_write_data[0:`COMMIT_CSR_CHANNEL_NUM - 1];
     logic[`COMMIT_CSR_CHANNEL_NUM - 1:0] commit_csrf_we;
-
-    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mstatus_data;
 
     logic commit_csrf_branch_num_add;
     logic commit_csrf_branch_predicted_add;
@@ -138,6 +447,7 @@ module core_top(
     logic commit_csrf_branch_miss_add;
     logic[$clog2(`COMMIT_WIDTH):0] commit_csrf_commit_num_add;
 
+    //commit<->rob
     logic[`ROB_ID_WIDTH - 1:0] commit_rob_next_id;
     logic rob_commit_next_id_valid;
 
@@ -162,6 +472,11 @@ module core_top(
     logic[`COMMIT_WIDTH - 1:0] rob_commit_retire_id_valid;
     logic[`COMMIT_WIDTH - 1:0] commit_rob_retire_pop;
 
+    logic rob_commit_empty;
+    logic rob_commit_full;
+    logic commit_rob_flush;
+
+    //commit<->phy_regfile
     logic[`PHY_REG_ID_WIDTH - 1:0] commit_phyf_id[0:`COMMIT_WIDTH - 1];
     logic[`COMMIT_WIDTH - 1:0] commit_phyf_invalid;
 
@@ -171,217 +486,10 @@ module core_top(
     logic[`PHY_REG_NUM - 1:0] commit_phyf_data_valid;
     logic commit_phyf_data_valid_restore;
 
+    //commit<->wb_commit_port
     wb_commit_pack_t wb_commit_port_data_out;
 
-    logic rob_commit_empty;
-    logic rob_commit_full;
-    logic commit_rob_flush;
-
-    logic[`CSR_ADDR_WIDTH - 1:0] excsr_csrf_addr;
-    logic[`REG_DATA_WIDTH - 1:0] csrf_excsr_data;
-
-    logic[`REG_DATA_WIDTH - 1:0] intif_csrf_mip_data;
-
-    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mie_data;
-    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mip_data;
-    logic[`REG_DATA_WIDTH - 1:0] csrf_all_mepc_data;
-
-    logic fetch_csrf_checkpoint_buffer_full_add;
-    logic fetch_csrf_fetch_not_full_add;
-    logic fetch_csrf_fetch_decode_fifo_full_add;
-    logic decode_csrf_decode_rename_fifo_full_add;
-    logic rename_csrf_phy_regfile_full_add;
-    logic rename_csrf_rob_full_add;
-    logic issue_csrf_issue_execute_fifo_full_add;
-    logic issue_csrf_issue_queue_full_add;
-    logic ras_csrf_ras_full_add;
-
-    issue_execute_pack_t issue_alu_fifo_data_out[0:`ALU_UNIT_NUM - 1];
-    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_data_out_valid;
-    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_pop;
-
-    execute_wb_pack_t alu_wb_port_data_in[0:`ALU_UNIT_NUM - 1];
-    logic[`ALU_UNIT_NUM - 1:0] alu_wb_port_we;
-    logic[`ALU_UNIT_NUM - 1:0] alu_wb_port_flush;
-
-    issue_execute_pack_t issue_bru_fifo_data_out[0:`BRU_UNIT_NUM - 1];
-    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_data_out_valid;
-    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_pop;
-
-    execute_wb_pack_t bru_wb_port_data_in[0:`BRU_UNIT_NUM - 1];
-    logic[`BRU_UNIT_NUM - 1:0] bru_wb_port_we;
-    logic[`BRU_UNIT_NUM - 1:0] bru_wb_port_flush;
-
-    issue_execute_pack_t issue_csr_fifo_data_out[0:`CSR_UNIT_NUM - 1];
-    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_data_out_valid;
-    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_pop;
-
-    execute_wb_pack_t csr_wb_port_data_in[0:`CSR_UNIT_NUM - 1];
-    logic[`CSR_UNIT_NUM - 1:0] csr_wb_port_we;
-    logic[`CSR_UNIT_NUM - 1:0] csr_wb_port_flush;
-
-
-    issue_execute_pack_t issue_div_fifo_data_out[0:`DIV_UNIT_NUM - 1];
-    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_data_out_valid;
-    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_pop;
-
-    execute_wb_pack_t div_wb_port_data_in[0:`DIV_UNIT_NUM - 1];
-    logic[`DIV_UNIT_NUM - 1:0] div_wb_port_we;
-    logic[`DIV_UNIT_NUM - 1:0] div_wb_port_flush;
-
-    execute_feedback_channel_t alu_execute_channel_feedback_pack[0:`ALU_UNIT_NUM - 1];
-    execute_feedback_channel_t bru_execute_channel_feedback_pack[0:`BRU_UNIT_NUM - 1];
-    execute_feedback_channel_t csr_execute_channel_feedback_pack[0:`CSR_UNIT_NUM - 1];
-    execute_feedback_channel_t div_execute_channel_feedback_pack[0:`DIV_UNIT_NUM - 1];
-    execute_feedback_channel_t lsu_execute_channel_feedback_pack[0:`LSU_UNIT_NUM - 1];
-    execute_feedback_channel_t mul_execute_channel_feedback_pack[0:`MUL_UNIT_NUM - 1];
-    execute_feedback_pack_t execute_feedback_pack;
-
-    logic[`BUS_DATA_WIDTH - 1:0] stbuf_exlsu_bus_data;
-    logic[`BUS_DATA_WIDTH - 1:0] stbuf_exlsu_bus_data_feedback;
-    logic stbuf_exlsu_bus_ready;
-
-    logic[`ROB_ID_WIDTH - 1:0] exlsu_stbuf_rob_id;
-    logic[`ADDR_WIDTH - 1:0] exlsu_stbuf_write_addr;
-    logic[`SIZE_WIDTH - 1:0] exlsu_stbuf_write_size;
-    logic[`BUS_DATA_WIDTH - 1:0] exlsu_stbuf_write_data;
-    logic exlsu_stbuf_push;
-    logic stbuf_exlsu_full;
-
-    issue_execute_pack_t issue_lsu_fifo_data_out[0:`LSU_UNIT_NUM - 1];
-    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_data_out_valid;
-    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_pop;
-
-    execute_wb_pack_t lsu_wb_port_data_in[0:`LSU_UNIT_NUM - 1];
-    logic[`LSU_UNIT_NUM - 1:0] lsu_wb_port_we;
-    logic[`LSU_UNIT_NUM - 1:0] lsu_wb_port_flush;
-
-    issue_execute_pack_t issue_mul_fifo_data_out[0:`MUL_UNIT_NUM - 1];
-    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_data_out_valid;
-    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_pop;
-
-    execute_wb_pack_t mul_wb_port_data_in[0:`MUL_UNIT_NUM - 1];
-    logic[`MUL_UNIT_NUM - 1:0] mul_wb_port_we;
-    logic[`MUL_UNIT_NUM - 1:0] mul_wb_port_flush;
-
-    logic all_intif_int_ext_req;
-
-    logic intif_all_int_ext_ack;
-    logic intif_all_int_software_ack;
-    logic intif_all_int_timer_ack;
-
-    logic stbuf_all_empty;
-
-    logic[`PHY_REG_ID_WIDTH - 1:0] issue_phyf_id[0:`READREG_WIDTH - 1][0:1];
-    logic[`REG_DATA_WIDTH - 1:0] phyf_issue_data[0:`READREG_WIDTH - 1][0:1];
-    logic phyf_issue_data_valid[0:`READREG_WIDTH - 1][0:1];
-
-    logic[`ADDR_WIDTH - 1:0] issue_stbuf_read_addr;
-    logic[`SIZE_WIDTH - 1:0] issue_stbuf_read_size;
-    logic issue_stbuf_rd;
-
-    readreg_issue_pack_t readreg_issue_port_data_in;
-    readreg_issue_pack_t readreg_issue_port_data_out;
-
-    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_full;
-    issue_execute_pack_t issue_alu_fifo_data_in[0:`ALU_UNIT_NUM - 1];
-    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_push;
-    logic[`ALU_UNIT_NUM - 1:0] issue_alu_fifo_flush;
-    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_full;
-    issue_execute_pack_t issue_bru_fifo_data_in[0:`BRU_UNIT_NUM - 1];
-    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_push;
-    logic[`BRU_UNIT_NUM - 1:0] issue_bru_fifo_flush;
-    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_full;
-    issue_execute_pack_t issue_csr_fifo_data_in[0:`CSR_UNIT_NUM - 1];
-    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_push;
-    logic[`CSR_UNIT_NUM - 1:0] issue_csr_fifo_flush;
-    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_full;
-    issue_execute_pack_t issue_div_fifo_data_in[0:`DIV_UNIT_NUM - 1];
-    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_push;
-    logic[`DIV_UNIT_NUM - 1:0] issue_div_fifo_flush;
-    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_full;
-    issue_execute_pack_t issue_lsu_fifo_data_in[0:`LSU_UNIT_NUM - 1];
-    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_push;
-    logic[`LSU_UNIT_NUM - 1:0] issue_lsu_fifo_flush;
-    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_full;
-    issue_execute_pack_t issue_mul_fifo_data_in[0:`MUL_UNIT_NUM - 1];
-    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_push;
-    logic[`MUL_UNIT_NUM - 1:0] issue_mul_fifo_flush;
-
-    logic[`PHY_REG_ID_WIDTH - 1:0] readreg_phyf_id[0:`READREG_WIDTH - 1][0:1];
-    logic[`REG_DATA_WIDTH - 1:0] phyf_readreg_data[0:`READREG_WIDTH - 1][0:1];
-    logic phyf_readreg_data_valid[0:`READREG_WIDTH - 1][0:1];
-
-    logic[`PHY_REG_ID_WIDTH - 1:0] wb_phyf_id[0:`WB_WIDTH - 1];
-    logic[`REG_DATA_WIDTH - 1:0] wb_phyf_data[0:`WB_WIDTH - 1];
-    logic[`WB_WIDTH - 1:0] wb_phyf_we;
-
-    logic[`PHY_REG_ID_WIDTH - 1:0] rat_rename_new_phy_id[0:`RENAME_WIDTH - 1];
-    logic[`RENAME_WIDTH - 1:0] rat_rename_new_phy_id_valid;
-    logic[`PHY_REG_ID_WIDTH - 1:0] rename_rat_phy_id[0:`RENAME_WIDTH - 1];
-    logic[`RENAME_WIDTH - 1:0] rename_rat_phy_id_valid;
-    logic[`ARCH_REG_ID_WIDTH - 1:0] rename_rat_arch_id[0:`RENAME_WIDTH - 1];
-    logic rename_rat_map;
-
-    logic[`ARCH_REG_ID_WIDTH - 1:0] rename_rat_read_arch_id[0:`RENAME_WIDTH - 1][0:2];
-    logic[`PHY_REG_ID_WIDTH - 1:0] rat_rename_read_phy_id[0:`RENAME_WIDTH - 1][0:2];
-
-    logic[`PHY_REG_NUM - 1:0] rat_rename_map_table_valid;
-    logic[`PHY_REG_NUM - 1:0] rat_rename_map_table_visible;
-
-    rename_readreg_pack_t rename_readreg_port_data_in;
-    rename_readreg_pack_t rename_readreg_port_data_out;
-
-    logic readreg_issue_port_we;
-    logic readreg_issue_port_flush;
-
-    logic[`ROB_ID_WIDTH - 1:0] rob_rename_new_id[0:`RENAME_WIDTH - 1];
-    logic[`RENAME_WIDTH - 1:0] rob_rename_new_id_valid;
-
-    rob_item_t rename_rob_data[0:`RENAME_WIDTH - 1];
-    logic[`RENAME_WIDTH - 1:0] rename_rob_data_valid;
-    logic rename_rob_push;
-
-    decode_rename_pack_t decode_rename_fifo_data_out[0:`RENAME_WIDTH - 1];
-    logic[`RENAME_WIDTH - 1:0] decode_rename_fifo_data_out_valid;
-    logic[`RENAME_WIDTH - 1:0] decode_rename_fifo_data_pop_valid;
-    logic decode_rename_fifo_pop;
-
-    logic rename_readreg_port_we;
-    logic rename_readreg_port_flush;
-
-    execute_wb_pack_t alu_wb_port_data_out[0:`ALU_UNIT_NUM - 1];
-    execute_wb_pack_t bru_wb_port_data_out[0:`BRU_UNIT_NUM - 1];
-    execute_wb_pack_t csr_wb_port_data_out[0:`CSR_UNIT_NUM - 1];
-    execute_wb_pack_t div_wb_port_data_out[0:`DIV_UNIT_NUM - 1];
-    execute_wb_pack_t lsu_wb_port_data_out[0:`LSU_UNIT_NUM - 1];
-    execute_wb_pack_t mul_wb_port_data_out[0:`MUL_UNIT_NUM - 1];
-
-    wb_commit_pack_t wb_commit_port_data_in;
-    logic wb_commit_port_we;
-    logic wb_commit_port_flush;
-
-    logic[`FETCH_WIDTH - 1:0] fetch_decode_fifo_data_in_enable;
-    fetch_decode_pack_t fetch_decode_fifo_data_in[0:`FETCH_WIDTH - 1];
-    logic[`FETCH_WIDTH - 1:0] fetch_decode_fifo_data_in_valid;
-    logic fetch_decode_fifo_push;
-    logic fetch_decode_fifo_flush;
-
-    fetch_decode_pack_t fetch_decode_fifo_data_out[0:`DECODE_WIDTH - 1];
-    logic[`DECODE_WIDTH - 1:0] fetch_decode_fifo_data_out_valid;
-    logic[`DECODE_WIDTH - 1:0] fetch_decode_fifo_data_pop_valid;
-    logic fetch_decode_fifo_pop;
-
-    logic[`DECODE_WIDTH - 1:0] decode_rename_fifo_data_in_enable;
-    decode_rename_pack_t decode_rename_fifo_data_in[0:`DECODE_WIDTH - 1];
-    logic[`DECODE_WIDTH - 1:0] decode_rename_fifo_data_in_valid;
-    logic decode_rename_fifo_push;
-    logic decode_rename_fifo_flush;
-
-    decode_feedback_pack_t decode_feedback_pack;
-    rename_feedback_pack_t rename_feedback_pack;
-    issue_feedback_pack_t issue_feedback_pack;
-    wb_feedback_pack_t wb_feedback_pack;
+    //commit<->all
     commit_feedback_pack_t commit_feedback_pack;
 
     genvar i;
@@ -489,7 +597,14 @@ module core_top(
     bus bus_inst(.*);
     checkpoint_buffer checkpoint_buffer_inst(.*);
     clint clint_inst(.*);
-    tcm tcm_inst(.*);
+
+    tcm #(
+        .IMAGE_PATH(IMAGE_PATH),
+        .IMAGE_INIT(IMAGE_INIT)
+    )tcm_inst(
+        .*
+    );
+
     csrfile csrfile_inst(.*);
     execute_feedback execute_feedback_inst(.*);
     interrupt_interface interrupt_interface_inst(.*);

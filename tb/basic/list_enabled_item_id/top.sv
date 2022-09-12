@@ -29,13 +29,15 @@ module top;
 
         for(i = start_pos;i < ITEM_NUM;i++) begin
             if(seq[i]) begin
-                ret[index++] = i;
+                ret[index] = i;
+                index++;
             end
         end
 
         for(i = 0;i < start_pos;i++) begin
             if(seq[i]) begin
-                ret[index++] = i;
+                ret[index] = i;
+                index++;
             end
         end
 

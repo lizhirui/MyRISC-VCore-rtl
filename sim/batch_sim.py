@@ -138,7 +138,7 @@ class dynamic_check_thread(threading.Thread):
                 unknown_error_cnt += 1
                 print_lock.release()
 
-            if "*W" in ret.replace("*W,BADPRF", "").replace("*W,PRLDYN", "").replace("*W,WKWTLK", "") or \
+            if "*W" in ret.replace("*W,BADPRF", "").replace("*W,PRLDYN", "").replace("*W,WKWTLK", "").replace("*N,SPUNSP", "").replace("*W,XPWDIS", "").replace("*W,DEAPF", "").replace("*W,XPOPT", "") or \
                 "Warning-" in ret.replace("Warning-[DEBUG_DEP] Option will be deprecated", "").replace("Warning-[LINX_KRNL] Unsupported Linux kernel", ""):
                 print_lock.acquire()
                 yellow_text("Warnings had been found: ")
@@ -149,7 +149,7 @@ class dynamic_check_thread(threading.Thread):
                 else:
                     ret = shell(["./clean_xrun.sh"] + item)
 
-                os._exit(0)
+                #os._exit(0)
                 print_lock.release()
 
 total_start_time = time.time()
@@ -161,6 +161,7 @@ parallel_count = 1
 parser = argparse.ArgumentParser()
 parser.add_argument("-g", "--group", help="test group", choices=["basic", "difftest", "all"], required=True)
 parser.add_argument("-s", "--trace", help="trace name", type=str, dest="trace_name")
+parser.add_argument("-i", "--simulator", help="simulator name", choices=["vcs", "xrun", "all"], required=True)
 parser.add_argument("-j", help="parallel count limit, default is 1", nargs="?", type=int, const=0, choices=range(0, cpu_count() + 1), dest="parallel_count")
 parser.add_argument("-t", help="testcase name, default is all testcases", type=str, dest="testcase_name")
 args = parser.parse_args()
@@ -172,12 +173,22 @@ if not args.parallel_count is None:
         parallel_count = args.parallel_count
 
 tb_groups = []
+use_vcs = False
+use_xrun = False
 
 if args.group == "all":
     tb_groups.append("basic")
     tb_groups.append("difftest")
 else:
     tb_groups.append(args.group)
+
+if args.group == "all":
+    use_vcs = True
+    use_xrun = True
+elif args.group == "vcs":
+    use_vcs = True
+elif args.group == "xrun":
+    use_xrun = True
 
 print("Start Time: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
@@ -219,16 +230,16 @@ original_testcase_list.sort(key = file_key)
 for item in original_testcase_list:
     if item[0] == "difftest":
         for trace in trace_list:
-            if not (item[0] + "-" + item[1]) in vcs_ignore_list:
+            if use_vcs and not (item[0] + "-" + item[1]) in vcs_ignore_list:
                 testcase_list.append([item[0], item[1], trace, "vcs"])
 
-            if not (item[0] + "-" + item[1]) in xrun_ignore_list:
+            if use_xrun and not (item[0] + "-" + item[1]) in xrun_ignore_list:
                 testcase_list.append([item[0], item[1], trace, "xrun"])
     else:
-        if not (item[0] + "-" + item[1]) in vcs_ignore_list:
+        if use_vcs and not (item[0] + "-" + item[1]) in vcs_ignore_list:
             testcase_list.append([item[0], item[1], "vcs"])
 
-        if not (item[0] + "-" + item[1]) in xrun_ignore_list:
+        if use_xrun and not (item[0] + "-" + item[1]) in xrun_ignore_list:
             testcase_list.append([item[0], item[1], "xrun"])
 
 if len(trace_list) > 0:

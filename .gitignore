@@ -30,6 +30,8 @@ xcelium.d/
 .bpad/
 .ida.*/
 .simvision/
+simprofile*/
+profile*
 indago_logs/
 .vscode/
 .ccls-cache/
@@ -39,6 +41,7 @@ fpga/
 syn/
 syn_simple/
 trace/
+trace_fast/
 image/
 mount.sh
 umount.sh
