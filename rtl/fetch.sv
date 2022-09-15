@@ -21,7 +21,7 @@ module fetch(
         input logic[`LOCAL_BHT_WIDTH - 1:0] bp_fetch_local_history, 
         
         output logic[`ADDR_WIDTH - 1:0] fetch_bus_addr,
-        output logic[`ADDR_WIDTH - 1:0] fetch_bus_read_req,
+        output logic fetch_bus_read_req,
         input logic[`INSTRUCTION_WIDTH * `FETCH_WIDTH - 1:0] bus_fetch_data,
         input logic bus_fetch_read_ack,
         
@@ -105,10 +105,10 @@ module fetch(
             assign cur_pc[i] = pc + (i << 2);
             assign has_exception[i] = !check_align(cur_pc[i], 4);
             assign opcode[i] = has_exception[i] ? 'b0 : bus_fetch_data[`INSTRUCTION_WIDTH * i +: `INSTRUCTION_WIDTH];
-            assign jump[i] = ((opcode[i] & 'h7f) == 'h6f) || ((opcode[i] & 'h7f) == 'h67) || ((opcode[i] & 'h7f) == 'h63) || (opcode[i] == 'h30200073);
-            assign fence_i[i] = ((opcode[i] & 'h7f) == 'h0f) && (((opcode[i] >> 12) & 'h07) == 'h01);
-            assign enable[i] = fetch_decode_fifo_data_in_enable[i] & !push_forbidden_fence_i[i] & !push_forbidden_jump[i];
-            assign should_send_inst[i] = !push_forbidden_fence_i[i] & !push_forbidden_jump[i];
+            assign jump[i] = (((opcode[i] & 'h7f) == 'h6f) || ((opcode[i] & 'h7f) == 'h67) || ((opcode[i] & 'h7f) == 'h63) || (opcode[i] == 'h30200073)) && bus_fetch_read_ack;
+            assign fence_i[i] = ((opcode[i] & 'h7f) == 'h0f) && (((opcode[i] >> 12) & 'h07) == 'h01) && bus_fetch_read_ack;
+            assign enable[i] = fetch_decode_fifo_data_in_enable[i] & !push_forbidden_fence_i[i] & !push_forbidden_jump[i] & bus_fetch_read_ack;
+            assign should_send_inst[i] = !push_forbidden_fence_i[i] & !push_forbidden_jump[i] & bus_fetch_read_ack;
             assign fetch_decode_fifo_data_in_valid[i] = enable[i];
             assign t_fetch_decode_pack[i].enable = enable[i];
             assign t_fetch_decode_pack[i].value = opcode[i];
@@ -145,6 +145,9 @@ module fetch(
             if(commit_feedback_pack.jump_enable && commit_feedback_pack.jump) begin
                 pc_next = commit_feedback_pack.next_pc;
             end
+            else begin
+                pc_next = pc;
+            end
         end
         else begin
             if(jump_index_valid) begin
@@ -173,7 +176,7 @@ module fetch(
         .FIRST_PRIORITY(1),
         .WIDTH(`FETCH_WIDTH)
     )priority_finder_jump_inst(
-        .data_in(jump & enable),
+        .data_in({`FETCH_WIDTH{bus_fetch_read_ack}} & jump & enable),
         .index(jump_index),
         .index_valid(jump_index_valid)
     );
@@ -182,7 +185,7 @@ module fetch(
         .FIRST_PRIORITY(0),
         .WIDTH(`FETCH_WIDTH)
     )priority_finder_enable_inst(
-        .data_in(enable),
+        .data_in({`FETCH_WIDTH{bus_fetch_read_ack}} & enable),
         .index(enable_index),
         .index_valid(enable_index_valid)
     );

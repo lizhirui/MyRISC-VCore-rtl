@@ -107,7 +107,7 @@ module wb(
 
             assign wb_phyf_id[i] = execute_wb_port[i].rd_phy;
             assign wb_phyf_data[i] = execute_wb_port[i].rd_value;
-            assign wb_phyf_we[i] = execute_wb_port[i].enable & execute_wb_port[i].valid & !execute_wb_port[i].has_exception & execute_wb_port[i].rd_enable & execute_wb_port[i].need_rename;
+            assign wb_phyf_we[i] = !wb_commit_port_flush && execute_wb_port[i].enable & execute_wb_port[i].valid & !execute_wb_port[i].has_exception & execute_wb_port[i].rd_enable & execute_wb_port[i].need_rename;
             assign wb_feedback_pack.channel[i].enable = wb_phyf_we[i];
             assign wb_feedback_pack.channel[i].phy_id = wb_phyf_id[i];
             assign wb_feedback_pack.channel[i].value = wb_phyf_data[i];

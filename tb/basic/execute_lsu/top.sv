@@ -178,7 +178,7 @@ module top;
         wait_clk();
         assert(exlsu_stbuf_rob_id == t_pack.rob_id) else $finish;
         assert(exlsu_stbuf_write_addr == t_pack.lsu_addr) else $finish;
-        assert(exlsu_stbuf_write_size == 'b01) else $finish;
+        assert(exlsu_stbuf_write_size == 'h2) else $finish;
         assert(exlsu_stbuf_write_data == t_pack.src2_value[15:0]) else $finish;
         assert(exlsu_stbuf_push == 'b1) else $finish;
         assert(issue_lsu_fifo_pop == 'b1) else $finish; 

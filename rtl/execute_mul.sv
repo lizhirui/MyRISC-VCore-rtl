@@ -27,7 +27,7 @@ module execute_mul(
     assign mul_wb_port_we = !mul_wb_port_flush;
     assign issue_mul_fifo_pop = mul_wb_port_we;
 
-    assign mul_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && mul_wb_port_we;
+    assign mul_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && mul_wb_port_we && !send_pack.has_exception;
     assign mul_execute_channel_feedback_pack.phy_id = send_pack.rd_phy;
     assign mul_execute_channel_feedback_pack.value = send_pack.rd_value;
 

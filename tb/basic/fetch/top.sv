@@ -21,7 +21,7 @@ module top;
     logic[`LOCAL_BHT_WIDTH - 1:0] bp_fetch_local_history; 
     
     logic[`ADDR_WIDTH - 1:0] fetch_bus_addr;
-    logic[`ADDR_WIDTH - 1:0] fetch_bus_read_req;
+    logic fetch_bus_read_req;
     logic[`INSTRUCTION_WIDTH * `FETCH_WIDTH - 1:0] bus_fetch_data;
     logic bus_fetch_read_ack;
     

@@ -51,7 +51,7 @@ module execute_bru(
     assign exbru_bp_hit = send_pack.predicted_jump == send_pack.bru_jump;
     assign exbru_bp_valid = bru_wb_port_we && rev_pack.enable && rev_pack.valid && rev_pack.checkpoint_id_valid;
 
-    assign bru_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && bru_wb_port_we;
+    assign bru_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && bru_wb_port_we && !send_pack.has_exception;
     assign bru_execute_channel_feedback_pack.phy_id = send_pack.rd_phy;
     assign bru_execute_channel_feedback_pack.value = send_pack.rd_value;
 
@@ -101,6 +101,7 @@ module execute_bru(
 
     always_comb begin
         send_pack.rd_value = 'b0;
+        send_pack.bru_jump = 'b0;
         new_next_pc_valid = 'b0;
         new_next_pc = 'b0;
 

@@ -30,7 +30,7 @@ module execute_alu(
     assign rev_pack = issue_alu_fifo_data_out;
     assign alu_wb_port_data_in = send_pack;
 
-    assign alu_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && alu_wb_port_we;
+    assign alu_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && alu_wb_port_we && !send_pack.has_exception;
     assign alu_execute_channel_feedback_pack.phy_id = send_pack.rd_phy;
     assign alu_execute_channel_feedback_pack.value = send_pack.rd_value;
 
@@ -85,7 +85,8 @@ module execute_alu(
     always_comb begin
         send_pack.rd_value = 'b0;
         new_has_exception = 'b0;
-        new_exception_value = riscv_exception_t::instruction_address_misaligned;
+        new_exception_id =  riscv_exception_t::instruction_address_misaligned;
+        new_exception_value = 'b0;
 
         case(rev_pack.sub_op.alu_op)
             alu_op_t::add: begin

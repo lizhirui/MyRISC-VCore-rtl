@@ -38,6 +38,7 @@ indago_logs/
 rtl/spyglass/
 rtl/work/
 fpga/
+fpga_test/
 syn/
 syn_simple/
 trace/

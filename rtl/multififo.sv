@@ -176,7 +176,7 @@ module multififo #(
             );
 
             assign read_bank_data_reg[i] = buffer[i][read_bank_addr[i]];
-            assign read_bank_data_reg_shift[i] = ($clog2(PORT_NUM * WIDTH)'(read_bank_set_index[i])) << $clog2(WIDTH);
+            assign read_bank_data_reg_shift[i] = read_bank_set_index[i] * WIDTH;
             assign data_out[i] = read_bank_data_recombine[BANK_NUM - 1][i * WIDTH+:WIDTH];
         end
 

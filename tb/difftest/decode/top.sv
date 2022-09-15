@@ -102,9 +102,9 @@ module top;
             commit_feedback_pack.flush = tdb.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0);
             eval();
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "decode_csrf_decode_rename_fifo_full_add", 0), decode_csrf_decode_rename_fifo_full_add)
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "fetch_decode_fifo_data_pop_valid", 0), fetch_decode_fifo_data_pop_valid)
 
-            if(fetch_decode_fifo_data_pop_valid) begin
+            if(tdb.get_uint8(DOMAIN_OUTPUT, "fetch_decode_fifo_data_pop_valid", 0) && tdb.get_uint8(DOMAIN_OUTPUT, "fetch_decode_fifo_pop", 0)) begin
+                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "fetch_decode_fifo_data_pop_valid", 0), fetch_decode_fifo_data_pop_valid)
                 `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "fetch_decode_fifo_pop", 0), fetch_decode_fifo_pop)
             end
 
@@ -157,7 +157,10 @@ module top;
                 end
             end
 
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "decode_rename_fifo_data_in_valid", 0), decode_rename_fifo_data_in_valid)
+            if(!tdb.get_uint8(DOMAIN_OUTPUT, "decode_rename_fifo_flush", 0)) begin
+                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "decode_rename_fifo_data_in_valid", 0), decode_rename_fifo_data_in_valid)
+            end
+
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "decode_rename_fifo_flush", 0), decode_rename_fifo_flush)
 
             if((!decode_rename_fifo_flush) && decode_rename_fifo_data_in_valid) begin

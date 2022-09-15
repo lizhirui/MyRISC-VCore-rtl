@@ -29,7 +29,7 @@ module execute_div(
     assign rev_pack = issue_div_fifo_data_out;
     assign div_wb_port_data_in = send_pack;
 
-    assign div_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && div_wb_port_we;
+    assign div_execute_channel_feedback_pack.enable = send_pack.enable && send_pack.valid && send_pack.rd_enable && send_pack.need_rename && div_wb_port_we && !send_pack.has_exception;
     assign div_execute_channel_feedback_pack.phy_id = send_pack.rd_phy;
     assign div_execute_channel_feedback_pack.value = send_pack.rd_value;
 

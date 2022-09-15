@@ -17,8 +17,8 @@ endif
 cd ../tb/$1/$module/
 #set nc_def = "FSDB_DUMP"
 set nc_def = 'SIM_IMAGE_NAME="$SIM_ROOT_DIR/image/'$2'.hex"'
-#set plusargs = "-noIncrComp"
-set plusargs = +NULL
+set plusargs = "-noIncrComp"
+#set plusargs = +NULL
 set flist = "./flist.f" ;
 set fsdb_opts = '';
 set notiming = "+notimingcheck";
@@ -57,7 +57,7 @@ vcs -full64  \
     +memcbk    \
     +sdfverbose    \
     +define+$nc_def     \
-    +define+VCS_SIMULATOR \
+    +define+SIMULATOR \
     -timescale=1ns/100ps    \
     $plusargs    \
     +warn=all    \

@@ -54,10 +54,6 @@ module core_top#(
     logic bus_clint_wr;
     logic[`BUS_DATA_WIDTH - 1:0] clint_bus_data;
 
-    //clint<->all
-    logic all_intif_int_software_req;
-    logic all_intif_int_timer_req;
-
     //csrfile<->interrupt_interface
     logic[`REG_DATA_WIDTH - 1:0] intif_csrf_mip_data;
 
@@ -103,7 +99,7 @@ module core_top#(
 
     //fetch<->bus
     logic[`ADDR_WIDTH - 1:0] fetch_bus_addr;
-    logic[`ADDR_WIDTH - 1:0] fetch_bus_read_req;
+    logic fetch_bus_read_req;
     logic[`INSTRUCTION_WIDTH * `FETCH_WIDTH - 1:0] bus_fetch_data;
     logic bus_fetch_read_ack;
 
@@ -481,7 +477,7 @@ module core_top#(
     logic[`COMMIT_WIDTH - 1:0] commit_phyf_invalid;
 
     logic[`PHY_REG_ID_WIDTH - 1:0] commit_phyf_flush_id;
-    logic[`COMMIT_WIDTH - 1:0] commit_phyf_flush_invalid;
+    logic commit_phyf_flush_invalid;
 
     logic[`PHY_REG_NUM - 1:0] commit_phyf_data_valid;
     logic commit_phyf_data_valid_restore;
@@ -609,7 +605,13 @@ module core_top#(
     execute_feedback execute_feedback_inst(.*);
     interrupt_interface interrupt_interface_inst(.*);
     phy_regfile phy_regfile_inst(.*);
-    ras ras_inst(.*);
+
+    ras #(
+        .DEPTH(`RAS_SIZE)
+    )ras_inst(
+        .*
+    );
+
     rat rat_inst(.*);
     rob rob_inst(.*);
     store_buffer store_buffer_inst(.*);
@@ -674,9 +676,8 @@ module core_top#(
 
     generate
         for(i = 0;i < `ALU_UNIT_NUM;i++) begin: fifo_issue_alu_interface
-            fifo #(
-                .WIDTH($bits(issue_execute_pack_t)),
-                .DEPTH(1)
+            handshake_dff #(
+                .WIDTH($bits(issue_execute_pack_t))
             )fifo_issue_execute_alu_inst(
                 .*,
                 .data_in(issue_alu_fifo_data_in[i]),
@@ -693,9 +694,8 @@ module core_top#(
 
     generate
         for(i = 0;i < `BRU_UNIT_NUM;i++) begin: fifo_issue_bru_interface
-            fifo #(
-                .WIDTH($bits(issue_execute_pack_t)),
-                .DEPTH(1)
+            handshake_dff #(
+                .WIDTH($bits(issue_execute_pack_t))
             )fifo_issue_execute_bru_inst(
                 .*,
                 .data_in(issue_bru_fifo_data_in[i]),
@@ -712,9 +712,8 @@ module core_top#(
 
     generate
         for(i = 0;i < `CSR_UNIT_NUM;i++) begin: fifo_issue_csr_interface
-            fifo #(
-                .WIDTH($bits(issue_execute_pack_t)),
-                .DEPTH(1)
+            handshake_dff #(
+                .WIDTH($bits(issue_execute_pack_t))
             )fifo_issue_execute_csr_inst(
                 .*,
                 .data_in(issue_csr_fifo_data_in[i]),
@@ -731,9 +730,8 @@ module core_top#(
 
     generate
         for(i = 0;i < `DIV_UNIT_NUM;i++) begin: fifo_issue_div_interface
-            fifo #(
-                .WIDTH($bits(issue_execute_pack_t)),
-                .DEPTH(1)
+            handshake_dff #(
+                .WIDTH($bits(issue_execute_pack_t))
             )fifo_issue_execute_div_inst(
                 .*,
                 .data_in(issue_div_fifo_data_in[i]),
@@ -750,9 +748,8 @@ module core_top#(
 
     generate
         for(i = 0;i < `LSU_UNIT_NUM;i++) begin: fifo_issue_lsu_interface
-            fifo #(
-                .WIDTH($bits(issue_execute_pack_t)),
-                .DEPTH(1)
+            handshake_dff #(
+                .WIDTH($bits(issue_execute_pack_t))
             )fifo_issue_execute_lsu_inst(
                 .*,
                 .data_in(issue_lsu_fifo_data_in[i]),
@@ -769,9 +766,8 @@ module core_top#(
 
     generate
         for(i = 0;i < `MUL_UNIT_NUM;i++) begin: fifo_issue_mul_interface
-            fifo #(
-                .WIDTH($bits(issue_execute_pack_t)),
-                .DEPTH(1)
+            handshake_dff #(
+                .WIDTH($bits(issue_execute_pack_t))
             )fifo_issue_execute_mul_inst(
                 .*,
                 .data_in(issue_mul_fifo_data_in[i]),

@@ -43,12 +43,24 @@ module bus(
         output logic bus_clint_wr,
         input logic[`BUS_DATA_WIDTH - 1:0] clint_bus_data
     );
-
+    
+    logic bus_tcm_fetch_rd_r;
     logic bus_tcm_stbuf_rd_r;
+    logic bus_clint_rd_r;
 
     assign bus_tcm_fetch_addr = fetch_bus_addr - `TCM_ADDR;
     assign bus_tcm_fetch_rd = fetch_bus_read_req && (fetch_bus_addr >= `TCM_ADDR) && (fetch_bus_addr < (`TCM_ADDR + `TCM_SIZE));
-    assign bus_fetch_data = tcm_bus_fetch_data;
+
+    always_ff @(posedge clk) begin
+        if(rst) begin
+            bus_tcm_fetch_rd_r <= 'b0;
+        end
+        else begin
+            bus_tcm_fetch_rd_r <= bus_tcm_fetch_rd;
+        end
+    end
+
+    assign bus_fetch_data = bus_tcm_fetch_rd_r ? tcm_bus_fetch_data : 'b0;
 
     always_ff @(posedge clk) begin
         if(rst) begin
@@ -78,13 +90,16 @@ module bus(
     always_ff @(posedge clk) begin
         if(rst) begin
             bus_tcm_stbuf_rd_r <= 'b0;
+            bus_clint_rd_r <= 'b0;
         end
         else begin
             bus_tcm_stbuf_rd_r <= bus_tcm_stbuf_rd;
+            bus_clint_rd_r <= bus_clint_rd;
         end
     end
 
-    assign bus_stbuf_data = bus_tcm_stbuf_rd_r ? tcm_bus_stbuf_data : clint_bus_data;
+    assign bus_stbuf_data = bus_tcm_stbuf_rd_r ? tcm_bus_stbuf_data : 
+                            bus_clint_rd_r ? clint_bus_data : 'b0;
 
     always_ff @(posedge clk) begin
         if(rst) begin

@@ -26,8 +26,8 @@ module tcm #(
     localparam BANK_ADDR_WIDTH = $clog2(BANK_NUM);
     localparam TCM_ADDR_WIDTH = $clog2(`TCM_SIZE);
 
-    logic[7:0] fetch_mem[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
-    logic[7:0] stbuf_mem[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
+    //(* ram_style="block" *)logic[7:0] fetch_mem[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
+    //(* ram_style="block" *)logic[7:0] stbuf_mem[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
 
     logic[`ADDR_WIDTH - 1:0] bus_tcm_fetch_addr_r;
     logic[`ADDR_WIDTH - 1:0] bus_tcm_stbuf_read_addr_r;
@@ -39,7 +39,7 @@ module tcm #(
     logic[BANK_NUM - 1:0] fetch_bank_id_cmp_r[0:BANK_NUM - 1];
     logic[`ADDR_WIDTH - BANK_ADDR_WIDTH - 1:0] fetch_bank_addr[0:BANK_NUM - 1];
     logic[BANK_ADDR_WIDTH - 1:0] fetch_bank_set_index[0:BANK_NUM - 1];
-    logic[`BUS_DATA_WIDTH - 1:0] fetch_bank_data_reg[0:BANK_NUM - 1];
+    logic[7:0] fetch_bank_data_reg[0:BANK_NUM - 1];
     logic[$clog2(`BUS_DATA_WIDTH) - 1:0] fetch_bank_data_reg_shift[0:BANK_NUM - 1];
     logic[`BUS_DATA_WIDTH - 1:0] fetch_bank_data_recombine[0:BANK_NUM - 1];
 
@@ -50,7 +50,7 @@ module tcm #(
     logic[BANK_NUM - 1:0] stbuf_read_bank_id_cmp_r[0:BANK_NUM - 1];
     logic[`ADDR_WIDTH - BANK_ADDR_WIDTH - 1:0] stbuf_read_bank_addr[0:BANK_NUM - 1];
     logic[BANK_ADDR_WIDTH - 1:0] stbuf_read_bank_set_index[0:BANK_NUM - 1];
-    logic[`BUS_DATA_WIDTH - 1:0] stbuf_read_bank_data_reg[0:BANK_NUM - 1];
+    logic[7:0] stbuf_read_bank_data_reg[0:BANK_NUM - 1];
     logic[$clog2(`BUS_DATA_WIDTH) - 1:0] stbuf_read_bank_data_reg_shift[0:BANK_NUM - 1];
     logic[`BUS_DATA_WIDTH - 1:0] stbuf_read_bank_data_recombine[0:BANK_NUM - 1];
 
@@ -66,7 +66,49 @@ module tcm #(
 
     genvar i, j;
 
-    `ifdef VCS_SIMULATOR
+    generate
+        for(i = 0;i < BANK_NUM;i++) begin: fetch_mem_generate
+            mem_dual_port_rw #(
+                .WIDTH(8),
+                .DEPTH(`TCM_SIZE / BANK_NUM),
+                .WRITE_FIRST(1),
+                .INIT_FILE({IMAGE_PATH, $sformatf(".%0d", i)}),
+                .INIT(IMAGE_INIT)
+            )fetch_mem(
+                .clk(clk),
+                .rst(rst),
+                .read_addr(fetch_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                .rd(bus_tcm_fetch_rd),
+                .read_data(fetch_bank_data_reg[i]),
+                .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                .write_data(stbuf_bank_write_data[i]),
+                .we(stbuf_bank_we[i])
+            );
+        end
+    endgenerate
+
+    generate
+        for(i = 0;i < BANK_NUM;i++) begin: stbuf_mem_generate
+            mem_dual_port_rw #(
+                .WIDTH(8),
+                .DEPTH(`TCM_SIZE / BANK_NUM),
+                .WRITE_FIRST(1),
+                .INIT_FILE({IMAGE_PATH, $sformatf(".%0d", i)}),
+                .INIT(IMAGE_INIT)
+            )STBUF_mem(
+                .clk(clk),
+                .rst(rst),
+                .read_addr(stbuf_read_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                .rd(bus_tcm_stbuf_rd),
+                .read_data(stbuf_read_bank_data_reg[i]),
+                .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                .write_data(stbuf_bank_write_data[i]),
+                .we(stbuf_bank_we[i])
+            );
+        end
+    endgenerate
+
+    /*`ifdef VCS_SIMULATOR
         logic[7:0] fetch_mem_copy[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
         logic[7:0] stbuf_mem_copy[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];
 
@@ -87,7 +129,7 @@ module tcm #(
                 end
             end
         endgenerate
-    `endif
+    `endif*/
 
     always_ff @(posedge clk) begin
         if(rst) begin
@@ -134,14 +176,15 @@ module tcm #(
                 .data_out(fetch_bank_addr[i])
             );
 
+            /*
             always_ff @(posedge clk) begin
                 if(stbuf_bank_we[i] && (stbuf_write_bank_addr[i] == fetch_bank_addr[i])) begin
                     fetch_bank_data_reg[i] <= stbuf_bank_write_data[i];
                 end
-                else begin
-                    fetch_bank_data_reg[i] <= fetch_mem[i][fetch_bank_addr[i]];
+                else if(bus_tcm_fetch_rd) begin
+                    fetch_bank_data_reg[i] <= fetch_mem[i][];
                 end
-            end
+            end*/
 
             assign fetch_bank_data_reg_shift[i] = ($clog2(`BUS_DATA_WIDTH)'(fetch_bank_set_index[i])) << 3;
         end
@@ -182,14 +225,14 @@ module tcm #(
                 .data_out(stbuf_read_bank_addr[i])
             );
 
-            always_ff @(posedge clk) begin
+            /*always_ff @(posedge clk) begin
                 if(stbuf_bank_we[i] && (stbuf_write_bank_addr[i] == stbuf_read_bank_addr[i])) begin
                     stbuf_read_bank_data_reg[i] <= stbuf_bank_write_data[i];
                 end
-                else begin
+                else if(bus_tcm_stbuf_rd) begin
                     stbuf_read_bank_data_reg[i] <= stbuf_mem[i][stbuf_read_bank_addr[i]];
                 end
-            end
+            end*/
 
             assign stbuf_read_bank_data_reg_shift[i] = ($clog2(`BUS_DATA_WIDTH)'(stbuf_read_bank_set_index[i])) << 3;
         end
@@ -267,7 +310,7 @@ module tcm #(
                 .data_out(stbuf_bank_write_data[i])
             );
 
-            `ifdef VCS_SIMULATOR
+            /*`ifdef VCS_SIMULATOR
                 always_ff @(posedge clk) begin
                     if(rst) begin
                         stbuf_mem[i] <= stbuf_mem_copy[i];
@@ -285,7 +328,7 @@ module tcm #(
                         fetch_mem[i][stbuf_write_bank_addr[i]] <= stbuf_bank_write_data[i];
                     end
                 end
-            `endif
+            `endif*/
         end
     endgenerate
 endmodule

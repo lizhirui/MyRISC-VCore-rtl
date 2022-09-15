@@ -17,6 +17,7 @@ endif
 cd ../tb/$1/$module/
 set nc_def = 'SIM_IMAGE_NAME="$SIM_ROOT_DIR/image/'$2'.hex"'
 #set plusargs = "-noupdate"
+#set plusargs = "-profile"
 set plusargs = ""
 #set multicore = "-mce"
 set multicore = ""
@@ -25,9 +26,11 @@ set fsdb_opts = '';
 set notiming = "-notimingcheck";
 set coverage_opts = ""; 
 set assert_opts = "";
-set ida_dump = "-input $SIM_SCRIPT_DIR/xcelium_ida_dump.tcl -access +rwc -accessreg +rwc -debug -linedebug -uvmlinedebug -classlinedebug -plidebug -fsmdebug"
+#set ida_dump = "-input $SIM_SCRIPT_DIR/xcelium_ida_dump.tcl -access +rwc -accessreg +rwc -debug -linedebug -uvmlinedebug -classlinedebug -plidebug -fsmdebug"
 #set ida_dump = "-input $SIM_SCRIPT_DIR/xcelium_ida_dump.tcl -access +rwc -accessreg +rwc -debug -plidebug"
 set ida_dump = ""
+set xprop = "-xprop C -XPELSA -xfile $SIM_ROOT_DIR/sim/xfile.txt"
+#set xprop = ""
 
 set OS=`uname -s`
 
@@ -40,7 +43,7 @@ switch ($OS)
    breaksw
 endsw
 
-#xrun -clean
+xrun -clean
 
 xrun -64bit \
     -sv \
@@ -49,11 +52,12 @@ xrun -64bit \
     $plusargs \
     $ida_dump \
     +define+$nc_def \
+    +define+SIMULATOR \
     -uvmaccess \
     -date \
     -dumpstack \
     -negdelay \
-    -xprop C -xverbose -XPELSA -xfile $SIM_ROOT_DIR/sim/xfile.txt \
+    $xprop \
     -nowarn CUVWSP \
     -nowarn DSEMEL \
     -nowarn RNDXCELON \

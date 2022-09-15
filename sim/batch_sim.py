@@ -134,7 +134,7 @@ class dynamic_check_thread(threading.Thread):
                 print_lock.acquire()
                 yellow_text("[" + str(self.thread_id + 1) + "-" + str(cnt) + "/" + str(len(self.local_task_list)) + ", " + case_name + "]: Unknown Error " + elapsed_time)
                 print(ret)
-                os._exit(0)
+                #os._exit(0)
                 unknown_error_cnt += 1
                 print_lock.release()
 
@@ -199,8 +199,8 @@ group_testcase_list = {}
 trace_list = []
 testcase_list = []
 
-vcs_ignore_list = []
-xrun_ignore_list = []
+vcs_ignore_list = ["difftest-core_top", "basic-tcm", "difftest-tcm"]
+xrun_ignore_list = ["difftest-core_top"]
 
 if "difftest" in tb_groups:
     if not args.trace_name is None:

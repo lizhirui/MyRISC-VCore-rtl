@@ -47,7 +47,7 @@ module execute_lsu(
 
     assign busy = inst_valid && !is_load && stbuf_exlsu_full && !(commit_feedback_pack.enable && commit_feedback_pack.flush);
 
-    assign lsu_execute_channel_feedback_pack.enable = inst_valid && send_pack.rd_enable && send_pack.need_rename && lsu_wb_port_we;
+    assign lsu_execute_channel_feedback_pack.enable = inst_valid && send_pack.rd_enable && send_pack.need_rename && lsu_wb_port_we && !send_pack.has_exception;
     assign lsu_execute_channel_feedback_pack.phy_id = send_pack.rd_phy;
     assign lsu_execute_channel_feedback_pack.value = send_pack.rd_value;
 
@@ -107,43 +107,43 @@ module execute_lsu(
 
         case(rev_pack.sub_op.lsu_op)
             lsu_op_t::lb: begin
-                send_pack.rd_value = sign_extend#(8)::_do(stbuf_exlsu_bus_data_feedback);
+                send_pack.rd_value = sign_extend#(8)::_do(stbuf_exlsu_bus_data_feedback[7:0]);
                 is_load = 'b1;
             end
 
             lsu_op_t::lbu: begin
-                send_pack.rd_value = stbuf_exlsu_bus_data_feedback;
+                send_pack.rd_value = stbuf_exlsu_bus_data_feedback[7:0];
                 is_load = 'b1;
             end
 
             lsu_op_t::lh: begin
-                send_pack.rd_value = sign_extend#(16)::_do(stbuf_exlsu_bus_data_feedback);
+                send_pack.rd_value = sign_extend#(16)::_do(stbuf_exlsu_bus_data_feedback[15:0]);
                 is_load = 'b1;
             end
 
             lsu_op_t::lhu: begin
-                send_pack.rd_value = stbuf_exlsu_bus_data_feedback;
+                send_pack.rd_value = stbuf_exlsu_bus_data_feedback[15:0];
                 is_load = 'b1;
             end
 
             lsu_op_t::lw: begin
-                send_pack.rd_value = stbuf_exlsu_bus_data_feedback;
+                send_pack.rd_value = stbuf_exlsu_bus_data_feedback[31:0];
                 is_load = 'b1;
             end
 
             lsu_op_t::sb: begin
                 exlsu_stbuf_write_data = rev_pack.src2_value[7:0];
-                exlsu_stbuf_write_size = 'b00;
+                exlsu_stbuf_write_size = 'd1;
             end
 
             lsu_op_t::sh: begin
                 exlsu_stbuf_write_data = rev_pack.src2_value[15:0];
-                exlsu_stbuf_write_size = 'b01;
+                exlsu_stbuf_write_size = 'd2;
             end
 
             lsu_op_t::sw: begin
                 exlsu_stbuf_write_data = rev_pack.src2_value;
-                exlsu_stbuf_write_size = 'b10;
+                exlsu_stbuf_write_size = 'd4;
             end
         endcase
     end
