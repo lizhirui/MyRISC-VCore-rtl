@@ -66,47 +66,91 @@ module tcm #(
 
     genvar i, j;
 
-    generate
-        for(i = 0;i < BANK_NUM;i++) begin: fetch_mem_generate
-            mem_dual_port_rw #(
-                .WIDTH(8),
-                .DEPTH(`TCM_SIZE / BANK_NUM),
-                .WRITE_FIRST(1),
-                .INIT_FILE({IMAGE_PATH, $sformatf(".%0d", i)}),
-                .INIT(IMAGE_INIT)
-            )fetch_mem(
-                .clk(clk),
-                .rst(rst),
-                .read_addr(fetch_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
-                .rd(bus_tcm_fetch_rd),
-                .read_data(fetch_bank_data_reg[i]),
-                .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
-                .write_data(stbuf_bank_write_data[i]),
-                .we(stbuf_bank_we[i])
-            );
-        end
-    endgenerate
+    `ifdef SIMULATOR_NOT_SUPPORT_SFORMATF_AS_CONSTANT_EXPRESSION
+        generate
+            for(i = 0;i < BANK_NUM;i++) begin: fetch_mem_generate
+                mem_dual_port_rw #(
+                    .WIDTH(8),
+                    .DEPTH(`TCM_SIZE / BANK_NUM),
+                    .WRITE_FIRST(1),
+                    .INIT_FILE(""),
+                    .INIT(0)
+                )fetch_mem(
+                    .clk(clk),
+                    .rst(rst),
+                    .read_addr(fetch_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .rd(bus_tcm_fetch_rd),
+                    .read_data(fetch_bank_data_reg[i]),
+                    .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .write_data(stbuf_bank_write_data[i]),
+                    .we(stbuf_bank_we[i])
+                );
+            end
+        endgenerate
 
-    generate
-        for(i = 0;i < BANK_NUM;i++) begin: stbuf_mem_generate
-            mem_dual_port_rw #(
-                .WIDTH(8),
-                .DEPTH(`TCM_SIZE / BANK_NUM),
-                .WRITE_FIRST(1),
-                .INIT_FILE({IMAGE_PATH, $sformatf(".%0d", i)}),
-                .INIT(IMAGE_INIT)
-            )STBUF_mem(
-                .clk(clk),
-                .rst(rst),
-                .read_addr(stbuf_read_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
-                .rd(bus_tcm_stbuf_rd),
-                .read_data(stbuf_read_bank_data_reg[i]),
-                .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
-                .write_data(stbuf_bank_write_data[i]),
-                .we(stbuf_bank_we[i])
-            );
-        end
-    endgenerate
+        generate
+            for(i = 0;i < BANK_NUM;i++) begin: stbuf_mem_generate
+                mem_dual_port_rw #(
+                    .WIDTH(8),
+                    .DEPTH(`TCM_SIZE / BANK_NUM),
+                    .WRITE_FIRST(1),
+                    .INIT_FILE(""),
+                    .INIT(0)
+                )stbuf_mem(
+                    .clk(clk),
+                    .rst(rst),
+                    .read_addr(stbuf_read_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .rd(bus_tcm_stbuf_rd),
+                    .read_data(stbuf_read_bank_data_reg[i]),
+                    .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .write_data(stbuf_bank_write_data[i]),
+                    .we(stbuf_bank_we[i])
+                );
+            end
+        endgenerate
+    `else
+        generate
+            for(i = 0;i < BANK_NUM;i++) begin: fetch_mem_generate
+                mem_dual_port_rw #(
+                    .WIDTH(8),
+                    .DEPTH(`TCM_SIZE / BANK_NUM),
+                    .WRITE_FIRST(1),
+                    .INIT_FILE({IMAGE_PATH, $sformatf(".%0d", i)}),
+                    .INIT(IMAGE_INIT)
+                )fetch_mem(
+                    .clk(clk),
+                    .rst(rst),
+                    .read_addr(fetch_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .rd(bus_tcm_fetch_rd),
+                    .read_data(fetch_bank_data_reg[i]),
+                    .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .write_data(stbuf_bank_write_data[i]),
+                    .we(stbuf_bank_we[i])
+                );
+            end
+        endgenerate
+
+        generate
+            for(i = 0;i < BANK_NUM;i++) begin: stbuf_mem_generate
+                mem_dual_port_rw #(
+                    .WIDTH(8),
+                    .DEPTH(`TCM_SIZE / BANK_NUM),
+                    .WRITE_FIRST(1),
+                    .INIT_FILE({IMAGE_PATH, $sformatf(".%0d", i)}),
+                    .INIT(IMAGE_INIT)
+                )stbuf_mem(
+                    .clk(clk),
+                    .rst(rst),
+                    .read_addr(stbuf_read_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .rd(bus_tcm_stbuf_rd),
+                    .read_data(stbuf_read_bank_data_reg[i]),
+                    .write_addr(stbuf_write_bank_addr[i][$clog2(`TCM_SIZE / BANK_NUM) - 1:0]),
+                    .write_data(stbuf_bank_write_data[i]),
+                    .we(stbuf_bank_we[i])
+                );
+            end
+        endgenerate
+    `endif
 
     /*`ifdef VCS_SIMULATOR
         logic[7:0] fetch_mem_copy[0:BANK_NUM - 1][0:`TCM_SIZE / BANK_NUM - 1];

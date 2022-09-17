@@ -58,6 +58,7 @@ vcs -full64  \
     +sdfverbose    \
     +define+$nc_def     \
     +define+SIMULATOR \
+    +define+SIMULATOR_NOT_SUPPORT_SFORMATF_AS_CONSTANT_EXPRESSION \
     -timescale=1ns/100ps    \
     $plusargs    \
     +warn=all    \

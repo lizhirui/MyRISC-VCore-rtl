@@ -139,7 +139,7 @@ class dynamic_check_thread(threading.Thread):
                 print_lock.release()
 
             if "*W" in ret.replace("*W,BADPRF", "").replace("*W,PRLDYN", "").replace("*W,WKWTLK", "").replace("*N,SPUNSP", "").replace("*W,XPWDIS", "").replace("*W,DEAPF", "").replace("*W,XPOPT", "") or \
-                "Warning-" in ret.replace("Warning-[DEBUG_DEP] Option will be deprecated", "").replace("Warning-[LINX_KRNL] Unsupported Linux kernel", ""):
+                "Warning-" in ret.replace("Warning-[DEBUG_DEP] Option will be deprecated", "").replace("Warning-[LINX_KRNL] Unsupported Linux kernel", "").replace("Warning-[UNGB] Unnamed generate block", ""):
                 print_lock.acquire()
                 yellow_text("Warnings had been found: ")
                 print(ret)
@@ -199,7 +199,7 @@ group_testcase_list = {}
 trace_list = []
 testcase_list = []
 
-vcs_ignore_list = ["difftest-core_top", "basic-tcm", "difftest-tcm"]
+vcs_ignore_list = ["difftest-core_top"]
 xrun_ignore_list = ["difftest-core_top"]
 
 if "difftest" in tb_groups:

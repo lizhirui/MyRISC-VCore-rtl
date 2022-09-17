@@ -45,10 +45,16 @@ module top;
     logic[`REG_DATA_WIDTH - 1:0] mepc_value;
     
     integer i, j;
+    integer unsigned temp;
     string str;
     longint cur_cycle;
     logic result;
     logic assert_fail;
+    logic[`ADDR_WIDTH - 1:0] bus_last_fetch_bus_addr;
+    logic bus_last_fetch_bus_read_req;
+    logic[`ADDR_WIDTH - 1:0] bus_last_stbuf_bus_read_addr;
+    logic[`SIZE_WIDTH - 1:0] bus_last_stbuf_bus_read_size;
+    logic bus_last_stbuf_bus_read_req;
 
     core_top #(
         .IMAGE_PATH(`SIM_IMAGE_NAME),
@@ -229,6 +235,11 @@ module top;
 
     task test;
         assert_fail = 0;
+        bus_last_fetch_bus_addr = 0;
+        bus_last_fetch_bus_read_req = 0;
+        bus_last_stbuf_bus_read_addr = 0;
+        bus_last_stbuf_bus_read_size = 0;
+        bus_last_stbuf_bus_read_req = 0;
         rst = 1;
         int_ext = 0;
         wait_clk();
@@ -353,25 +364,309 @@ module top;
                 end
             end
 
+            //bus
+            if(!tdb_commit.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.enable", 0) || !tdb_commit.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.flush", 0)) begin
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_INPUT, "fetch_bus_read_req_cur", 0), bus_last_fetch_bus_read_req)
+
+                if(bus_last_fetch_bus_read_req) begin
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "fetch_bus_addr_cur", 0), bus_last_fetch_bus_addr)
+                end
+
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_INPUT, "stbuf_bus_read_req_cur", 0), bus_last_stbuf_bus_read_req)
+
+                if(bus_last_stbuf_bus_read_req) begin
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "stbuf_bus_read_addr_cur", 0), bus_last_stbuf_bus_read_addr)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_INPUT, "stbuf_bus_read_size_cur", 0), bus_last_stbuf_bus_read_size)
+                end
+
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_INPUT, "stbuf_bus_write_req", 0), core_top_inst.bus_inst.stbuf_bus_write_req)
+
+                if(core_top_inst.bus_inst.stbuf_bus_write_req) begin
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "stbuf_bus_write_addr", 0), core_top_inst.bus_inst.stbuf_bus_write_addr)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_INPUT, "stbuf_bus_write_size", 0), core_top_inst.bus_inst.stbuf_bus_write_size)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "stbuf_bus_data", 0), core_top_inst.bus_inst.stbuf_bus_data)
+                end
+            end
+
+            bus_last_fetch_bus_addr = core_top_inst.bus_inst.fetch_bus_addr;
+            bus_last_fetch_bus_read_req = core_top_inst.bus_inst.fetch_bus_read_req;
+            bus_last_stbuf_bus_read_addr = core_top_inst.bus_inst.stbuf_bus_read_addr;
+            bus_last_stbuf_bus_read_size = core_top_inst.bus_inst.stbuf_bus_read_size;
+            bus_last_stbuf_bus_read_req = core_top_inst.bus_inst.stbuf_bus_read_req;
+
+            if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_fetch_read_ack", 0)) begin
+                for(i = 0;i < `FETCH_WIDTH;i++) begin
+                    if(((tdb_bus.get_uint32(DOMAIN_INPUT, "fetch_bus_addr_cur", 0) + i * `INSTRUCTION_WIDTH) >= `TCM_ADDR) && ((tdb_bus.get_uint32(DOMAIN_INPUT, "fetch_bus_addr_cur", 0) + i * `INSTRUCTION_WIDTH) < (`TCM_ADDR + `TCM_SIZE))) begin
+                        `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "tcm_bus_fetch_data", i), core_top_inst.bus_inst.tcm_bus_fetch_data[i * `INSTRUCTION_WIDTH +: `INSTRUCTION_WIDTH])
+                    end
+                end
+            end
+
+            if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_rd_cur", 0)) begin
+                case(tdb_bus.get_uint8(DOMAIN_INPUT, "stbuf_bus_read_size_cur", 0))
+                    'h1: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "tcm_bus_stbuf_data", 0) & 'hff, core_top_inst.bus_inst.tcm_bus_stbuf_data[7:0])
+                    'h2: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "tcm_bus_stbuf_data", 0) & 'hffff, core_top_inst.bus_inst.tcm_bus_stbuf_data[15:0])
+                    'h4: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "tcm_bus_stbuf_data", 0), core_top_inst.bus_inst.tcm_bus_stbuf_data[31:0])
+                    default: `assert(0)
+                endcase
+                
+            end
+
+            if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_clint_rd_cur", 0)) begin
+                case(tdb_bus.get_uint8(DOMAIN_INPUT, "stbuf_bus_read_size_cur", 0))
+                    'h1: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "clint_bus_data", 0) & 'hff, core_top_inst.bus_inst.clint_bus_data[7:0])
+                    'h2: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "clint_bus_data", 0) & 'hffff, core_top_inst.bus_inst.clint_bus_data[15:0])
+                    'h4: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_INPUT, "clint_bus_data", 0), core_top_inst.bus_inst.clint_bus_data[31:0])
+                    default: `assert(0)
+                endcase
+            end
+
+            if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_fetch_read_ack", 0)) begin
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_fetch_read_ack", 0), core_top_inst.bus_inst.bus_fetch_read_ack)
+
+                for(i = 0;i < `FETCH_WIDTH;i++) begin
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_fetch_data", i), core_top_inst.bus_inst.bus_fetch_data[i * `INSTRUCTION_WIDTH+:`INSTRUCTION_WIDTH])
+                end
+            end
+
+            if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_stbuf_read_ack", 0)) begin
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_stbuf_read_ack", 0), core_top_inst.bus_inst.bus_stbuf_read_ack)
+                
+                case(tdb_bus.get_uint8(DOMAIN_INPUT, "stbuf_bus_read_size_cur", 0))
+                    'd1: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_stbuf_data", 0) & 'hff, core_top_inst.bus_inst.bus_stbuf_data[7:0])
+                    'd2: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_stbuf_data", 0) & 'hffff, core_top_inst.bus_inst.bus_stbuf_data[15:0])
+                    'd4: `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_stbuf_data", 0), core_top_inst.bus_inst.bus_stbuf_data[31:0])
+                    default: `assert(0)
+                endcase
+            end
+
+            if(cur_cycle > 0) begin
+                tdb_bus.move_to_prev_row();
+                `assert(tdb_bus.read_cur_row())
+                cur_cycle = tdb_bus.get_cur_row();
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_stbuf_write_ack_next", 0), core_top_inst.bus_inst.bus_stbuf_write_ack)
+                tdb_bus.move_to_next_row();
+                `assert(tdb_bus.read_cur_row())
+                cur_cycle = tdb_bus.get_cur_row();
+            end
+
+            tdb_bus.move_to_next_row();
+
+            if(tdb_bus.read_cur_row()) begin
+                cur_cycle = tdb_bus.get_cur_row();
+                
+                if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_fetch_rd_cur", 0)) begin
+                    `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_fetch_rd_cur", 0), core_top_inst.bus_inst.bus_tcm_fetch_rd)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_tcm_fetch_addr_cur", 0), core_top_inst.bus_inst.bus_tcm_fetch_addr)
+                end
+
+                if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_rd_cur", 0)) begin
+                    `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_rd_cur", 0), core_top_inst.bus_inst.bus_tcm_stbuf_rd)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_read_addr_cur", 0), core_top_inst.bus_inst.bus_tcm_stbuf_read_addr)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_read_size_cur", 0), core_top_inst.bus_inst.bus_tcm_stbuf_read_size)
+                end
+                
+                if(tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_clint_rd_cur", 0)) begin
+                    `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_clint_rd_cur", 0), core_top_inst.bus_inst.bus_clint_rd)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_clint_read_addr_cur", 0), core_top_inst.bus_inst.bus_clint_read_addr)
+                    `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_clint_read_size_cur", 0), core_top_inst.bus_inst.bus_clint_read_size)
+                end
+            end
+
+            tdb_bus.move_to_prev_row();
+            `assert(tdb_bus.read_cur_row())
+            cur_cycle = tdb_bus.get_cur_row();
+            `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_wr", 0), core_top_inst.bus_inst.bus_tcm_stbuf_wr)
+
+            if(core_top_inst.bus_inst.bus_tcm_stbuf_wr) begin
+                `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_write_addr", 0), core_top_inst.bus_inst.bus_tcm_stbuf_write_addr)
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_tcm_stbuf_write_size", 0), core_top_inst.bus_inst.bus_tcm_stbuf_write_size)
+                `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_tcm_stbuf_data", 0), core_top_inst.bus_inst.bus_tcm_stbuf_data)
+            end    
+            
+            `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_clint_wr", 0), core_top_inst.bus_inst.bus_clint_wr)
+
+            if(core_top_inst.bus_inst.bus_clint_wr) begin
+                `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_clint_write_addr", 0), core_top_inst.bus_inst.bus_clint_write_addr)
+                `assert_equal(cur_cycle, tdb_bus.get_uint8(DOMAIN_OUTPUT, "bus_clint_write_size", 0), core_top_inst.bus_inst.bus_clint_write_size)
+                `assert_equal(cur_cycle, tdb_bus.get_uint32(DOMAIN_OUTPUT, "bus_clint_data", 0), core_top_inst.bus_inst.bus_clint_data)
+            end
+
+            //csrfile
+            if(tdb_csrfile.get_uint16(DOMAIN_INPUT, "excsr_csrf_addr", 0) != 65535) begin
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint16(DOMAIN_INPUT, "excsr_csrf_addr", 0), core_top_inst.csrfile_inst.excsr_csrf_addr)
+            end
+
+            for(i = 0;i < `COMMIT_CSR_CHANNEL_NUM;i++) begin
+                if(tdb_csrfile.get_uint16(DOMAIN_INPUT, "commit_csrf_read_addr", i) != 65535) begin
+                    `assert_equal(cur_cycle, tdb_csrfile.get_uint16(DOMAIN_INPUT, "commit_csrf_read_addr", i), core_top_inst.csrfile_inst.commit_csrf_read_addr[i])
+                end
+
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "commit_csrf_we", i), core_top_inst.csrfile_inst.commit_csrf_we[i])
+
+                if(core_top_inst.csrfile_inst.commit_csrf_we[i]) begin
+                    `assert_equal(cur_cycle, tdb_csrfile.get_uint16(DOMAIN_INPUT, "commit_csrf_write_addr", i), core_top_inst.csrfile_inst.commit_csrf_write_addr[i])
+                    `assert_equal(cur_cycle, tdb_csrfile.get_uint32(DOMAIN_INPUT, "commit_csrf_write_data", i), core_top_inst.csrfile_inst.commit_csrf_write_data[i])
+                end
+
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint32(DOMAIN_INPUT, "intif_csrf_mip_data", 0), core_top_inst.csrfile_inst.intif_csrf_mip_data)
+
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "fetch_csrf_checkpoint_buffer_full_add", 0), core_top_inst.csrfile_inst.fetch_csrf_checkpoint_buffer_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "fetch_csrf_fetch_not_full_add", 0), core_top_inst.csrfile_inst.fetch_csrf_fetch_not_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "fetch_csrf_fetch_decode_fifo_full_add", 0), core_top_inst.csrfile_inst.fetch_csrf_fetch_decode_fifo_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "decode_csrf_decode_rename_fifo_full_add", 0), core_top_inst.csrfile_inst.decode_csrf_decode_rename_fifo_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "rename_csrf_phy_regfile_full_add", 0), core_top_inst.csrfile_inst.rename_csrf_phy_regfile_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "rename_csrf_rob_full_add", 0), core_top_inst.csrfile_inst.rename_csrf_rob_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "issue_csrf_issue_execute_fifo_full_add", 0), core_top_inst.csrfile_inst.issue_csrf_issue_execute_fifo_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "issue_csrf_issue_queue_full_add", 0), core_top_inst.csrfile_inst.issue_csrf_issue_queue_full_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "commit_csrf_branch_num_add", 0), core_top_inst.csrfile_inst.commit_csrf_branch_num_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "commit_csrf_branch_predicted_add", 0), core_top_inst.csrfile_inst.commit_csrf_branch_predicted_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "commit_csrf_branch_hit_add", 0), core_top_inst.csrfile_inst.commit_csrf_branch_hit_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "commit_csrf_branch_miss_add", 0), core_top_inst.csrfile_inst.commit_csrf_branch_miss_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "commit_csrf_commit_num_add", 0), core_top_inst.csrfile_inst.commit_csrf_commit_num_add)
+                `assert_equal(cur_cycle, tdb_csrfile.get_uint8(DOMAIN_INPUT, "ras_csrf_ras_full_add", 0), core_top_inst.csrfile_inst.ras_csrf_ras_full_add)
+            end
+
+            //interrupt_interface
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint8(DOMAIN_INPUT, "all_intif_int_ext_req", 0), core_top_inst.interrupt_interface_inst.all_intif_int_ext_req)
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint8(DOMAIN_INPUT, "all_intif_int_software_req", 0), core_top_inst.interrupt_interface_inst.all_intif_int_software_req)
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint8(DOMAIN_INPUT, "all_intif_int_timer_req", 0), core_top_inst.interrupt_interface_inst.all_intif_int_timer_req)
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint32(DOMAIN_INPUT, "csrf_all_mie_data", 0), core_top_inst.interrupt_interface_inst.csrf_all_mie_data)
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint32(DOMAIN_INPUT, "csrf_all_mstatus_data", 0), core_top_inst.interrupt_interface_inst.csrf_all_mstatus_data)
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint32(DOMAIN_INPUT, "csrf_all_mip_data", 0), core_top_inst.interrupt_interface_inst.csrf_all_mip_data)
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint32(DOMAIN_INPUT, "commit_intif_ack_data", 0), core_top_inst.interrupt_interface_inst.commit_intif_ack_data)
+
+            //phy_regfile
+            for(i = 0;i < `READREG_WIDTH;i++) begin
+                for(j = 0;j < 2;j++) begin
+                    if(tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "readreg_phyf_id", i * 2 + j) != 255) begin
+                        `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "readreg_phyf_id", i * 2 + j), core_top_inst.phy_regfile_inst.readreg_phyf_id[i][j])
+                    end
+                end
+            end
+
+            for(i = 0;i < `READREG_WIDTH;i++) begin
+                for(j = 0;j < 2;j++) begin
+                    if(tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "issue_phyf_id", i * 2 + j) != 255) begin
+                        `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "issue_phyf_id", i * 2 + j), core_top_inst.phy_regfile_inst.issue_phyf_id[i][j])
+                    end
+                end
+            end
+
+            for(i = 0;i < `WB_WIDTH;i++) begin
+                `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "wb_phyf_we", i), core_top_inst.phy_regfile_inst.wb_phyf_we[i])
+
+                if(core_top_inst.phy_regfile_inst.wb_phyf_we[i]) begin
+                    `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "wb_phyf_id", i), core_top_inst.phy_regfile_inst.wb_phyf_id[i])
+                    `assert_equal(cur_cycle, tdb_phy_regfile.get_uint32(DOMAIN_INPUT, "wb_phyf_data", i), core_top_inst.phy_regfile_inst.wb_phyf_data[i])
+                end
+            end
+
+            for(i = 0;i < `COMMIT_WIDTH;i++) begin
+                `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "commit_phyf_invalid", i), core_top_inst.phy_regfile_inst.commit_phyf_invalid[i])
+
+                if(core_top_inst.phy_regfile_inst.commit_phyf_invalid[i]) begin
+                    `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "commit_phyf_id", i), core_top_inst.phy_regfile_inst.commit_phyf_id[i])
+                end
+            end
+
+            `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "commit_phyf_flush_invalid", 0), core_top_inst.phy_regfile_inst.commit_phyf_flush_invalid)
+
+            if(core_top_inst.phy_regfile_inst.commit_phyf_flush_invalid) begin
+                `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "commit_phyf_flush_id", 0), core_top_inst.phy_regfile_inst.commit_phyf_flush_id)
+            end
+
+            `assert_equal(cur_cycle, tdb_phy_regfile.get_uint8(DOMAIN_INPUT, "commit_phyf_data_valid_restore", 0), core_top_inst.phy_regfile_inst.commit_phyf_data_valid_restore)
+
+            if(core_top_inst.phy_regfile_inst.commit_phyf_data_valid_restore) begin
+                `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb_phy_regfile, DOMAIN_INPUT, "commit_phyf_data_valid", 0), core_top_inst.phy_regfile_inst.commit_phyf_data_valid)
+            end
+
             //ras
             `assert_equal(cur_cycle, tdb_ras.get_uint8(DOMAIN_INPUT, "bp_ras_push", 0), core_top_inst.ras_inst.bp_ras_push)
 
             if(core_top_inst.ras_inst.bp_ras_push) begin
                 `assert_equal(cur_cycle, tdb_ras.get_uint32(DOMAIN_INPUT, "bp_ras_addr", 0), core_top_inst.ras_inst.bp_ras_addr)
-                
-                /*if(cur_cycle > 18000) begin
-                    $display("cycle: %0d, push: %0x", cur_cycle, core_top_inst.ras_inst.bp_ras_addr);
-                end*/
             end
 
             `assert_equal(cur_cycle, tdb_ras.get_uint8(DOMAIN_INPUT, "bp_ras_pop", 0), core_top_inst.ras_inst.bp_ras_pop)
 
             if(core_top_inst.ras_inst.bp_ras_pop) begin
                 `assert_equal(cur_cycle, tdb_ras.get_uint32(DOMAIN_OUTPUT, "ras_bp_addr", 0), core_top_inst.ras_inst.ras_bp_addr)
+            end
 
-                /*if(cur_cycle > 18000) begin
-                    $display("cycle: %0d, pop: %0x", cur_cycle, core_top_inst.ras_inst.ras_bp_addr);
-                end*/
+            //rat
+            temp = 0;
+
+            for(i = 0;i < `RENAME_WIDTH;i++) begin
+                temp = temp | tdb_rat.get_uint8(DOMAIN_INPUT, "rename_rat_phy_id_valid", i);
+            end
+
+            if(tdb_rat.get_uint8(DOMAIN_INPUT, "rename_rat_map", 0) && temp) begin
+                `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "rename_rat_map", 0), core_top_inst.rat_inst.rename_rat_map)
+
+                if(core_top_inst.rat_inst.rename_rat_map) begin
+                    for(i = 0;i < `RENAME_WIDTH;i++) begin
+                        `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "rename_rat_phy_id_valid", i), core_top_inst.rat_inst.rename_rat_phy_id_valid[i])
+
+                        if(core_top_inst.rat_inst.rename_rat_phy_id_valid[i]) begin
+                            `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "rename_rat_phy_id", i), core_top_inst.rat_inst.rename_rat_phy_id[i])
+                        end
+                    end
+                end
+            end
+
+            for(i = 0;i < `RENAME_WIDTH;i++) begin
+                for(j = 0;j < 3;j++) begin
+                    if(tdb_rat.get_uint8(DOMAIN_INPUT, "rename_rat_read_arch_id", i * 3 + j) != 255) begin
+                        `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "rename_rat_read_arch_id", i * 3 + j), core_top_inst.rat_inst.rename_rat_read_arch_id[i][j])
+                    end
+                end
+            end
+
+            temp = 0;
+
+            for(i = 0;i < `COMMIT_WIDTH;i++) begin
+                temp = temp | tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_release_phy_id_valid", i);
+            end
+
+            if(tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_release_map", 0) && temp) begin
+                `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_release_map", 0), core_top_inst.rat_inst.commit_rat_release_map)
+
+                for(i = 0;i < `COMMIT_WIDTH;i++) begin
+                    `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_release_phy_id_valid", i), core_top_inst.rat_inst.commit_rat_release_phy_id_valid[i])
+
+                    if(core_top_inst.rat_inst.commit_rat_release_phy_id_valid[i]) begin
+                        `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_release_phy_id", i), core_top_inst.rat_inst.commit_rat_release_phy_id[i])
+                    end
+                end
+            end
+
+            temp = 0;
+
+            for(i = 0;i < `COMMIT_WIDTH;i++) begin
+                temp = temp | tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_commit_phy_id_valid", i);
+            end
+
+            if(tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_commit_map", 0) && temp) begin
+                `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_commit_map", 0), core_top_inst.rat_inst.commit_rat_commit_map)
+
+                for(i = 0;i < `COMMIT_WIDTH;i++) begin
+                    `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_commit_phy_id_valid", i), core_top_inst.rat_inst.commit_rat_commit_phy_id_valid[i])
+
+                    if(core_top_inst.rat_inst.commit_rat_commit_phy_id_valid[i]) begin
+                        `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_commit_phy_id", i), core_top_inst.rat_inst.commit_rat_commit_phy_id[i])
+                    end
+                end
+            end
+
+            if(tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_restore_map", 0)) begin
+                `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_restore_map", 0), core_top_inst.rat_inst.commit_rat_restore_map)
+
+                if(core_top_inst.rat_inst.commit_rat_restore_map) begin
+                    `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_restore_new_phy_id", 0), core_top_inst.rat_inst.commit_rat_restore_new_phy_id)
+                    `assert_equal(cur_cycle, tdb_rat.get_uint8(DOMAIN_INPUT, "commit_rat_restore_old_phy_id", 0), core_top_inst.rat_inst.commit_rat_restore_old_phy_id)
+                end
             end
             
             //fetch
@@ -1175,12 +1470,6 @@ module top;
             end
 
             //execute_lsu_0
-            if(cur_cycle >= 300000 && (cur_cycle <= 300100)) begin
-                $display("cycle = %0d, stbuf_exlsu_bus_ready = %0d, stbuf_exlsu_bus_data = %0x, stbuf_exlsu_bus_data_feedback = %0x", cur_cycle, core_top_inst.execute_lsu_generate[0].execute_lsu_inst.stbuf_exlsu_bus_ready, core_top_inst.execute_lsu_generate[0].execute_lsu_inst.stbuf_exlsu_bus_data, core_top_inst.execute_lsu_generate[0].execute_lsu_inst.stbuf_exlsu_bus_data_feedback);
-                $display("issue_stbuf_read_addr_r = %0x, issue_stbuf_read_size_r = %0d", core_top_inst.store_buffer_inst.issue_stbuf_read_addr_r, core_top_inst.store_buffer_inst.issue_stbuf_read_size_r);
-                $display("issue_stbuf_read_addr = %0x, issue_stbuf_read_size = %0d, issue_stbuf_rd = %0d", core_top_inst.store_buffer_inst.issue_stbuf_read_addr, core_top_inst.store_buffer_inst.issue_stbuf_read_size, core_top_inst.store_buffer_inst.issue_stbuf_rd);
-            end
-
             `assert_equal(cur_cycle, tdb_execute_lsu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_lsu_generate[0].execute_lsu_inst.commit_feedback_pack.enable)
             `assert_equal(cur_cycle, tdb_execute_lsu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_lsu_generate[0].execute_lsu_inst.commit_feedback_pack.flush)
 
@@ -1421,10 +1710,6 @@ module top;
                 for(i = 0;i < `ALU_UNIT_NUM;i++) begin
                     `assert_equal(cur_cycle, tdb_wb.get_uint8(DOMAIN_INPUT, "execute_wb_port_data_out.enable", i), core_top_inst.wb_inst.alu_wb_port_data_out[i].enable)
 
-                    if(tdb_wb.get_uint8(DOMAIN_INPUT, "execute_wb_port_data_out.enable", i) != core_top_inst.wb_inst.alu_wb_port_data_out[i].enable) begin
-                        $display("i = %0d", i);
-                    end
-
                     if(core_top_inst.wb_inst.alu_wb_port_data_out[i].enable) begin
                         `assert_equal(cur_cycle, tdb_wb.get_uint32(DOMAIN_INPUT, "execute_wb_port_data_out.value", i), core_top_inst.wb_inst.alu_wb_port_data_out[i].value)
                         `assert_equal(cur_cycle, tdb_wb.get_uint8(DOMAIN_INPUT, "execute_wb_port_data_out.valid", i), core_top_inst.wb_inst.alu_wb_port_data_out[i].valid)
@@ -1505,6 +1790,195 @@ module top;
                         `assert_equal(cur_cycle, tdb_wb.get_uint8(DOMAIN_INPUT, "execute_wb_port_data_out.sub_op", i), core_top_inst.wb_inst.alu_wb_port_data_out[i].sub_op)
                     end
                 end
+            end
+
+            //commit
+            `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint8(DOMAIN_OUTPUT, "intif_commit_has_interrupt", 0), core_top_inst.commit_inst.intif_commit_has_interrupt)
+            
+            if(core_top_inst.commit_inst.intif_commit_has_interrupt) begin
+                `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint32(DOMAIN_OUTPUT, "intif_commit_mcause_data", 0), core_top_inst.commit_inst.intif_commit_mcause_data)
+                `assert_equal(cur_cycle, tdb_interrupt_interface.get_uint32(DOMAIN_OUTPUT, "intif_commit_ack_data", 0), core_top_inst.commit_inst.intif_commit_ack_data)
+            end
+
+            for(i = 0;i < `COMMIT_WIDTH;i++) begin
+                if(tdb_checkpoint_buffer.get_uint16(DOMAIN_INPUT, "commit_cpbuf_id", i) != 65535) begin
+                    `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb_checkpoint_buffer, DOMAIN_OUTPUT, "cpbuf_commit_data.rat_phy_map_table_valid", i), core_top_inst.commit_inst.cpbuf_commit_data[i].rat_phy_map_table_valid)
+                    `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb_checkpoint_buffer, DOMAIN_OUTPUT, "cpbuf_commit_data.rat_phy_map_table_visible", i), core_top_inst.commit_inst.cpbuf_commit_data[i].rat_phy_map_table_visible)
+                    `assert_equal(cur_cycle, tdb_checkpoint_buffer.get_uint16(DOMAIN_OUTPUT, "cpbuf_commit_data.global_history", i), core_top_inst.commit_inst.cpbuf_commit_data[i].global_history)
+                    `assert_equal(cur_cycle, tdb_checkpoint_buffer.get_uint16(DOMAIN_OUTPUT, "cpbuf_commit_data.local_history", i), core_top_inst.commit_inst.cpbuf_commit_data[i].local_history)
+                end
+            end
+
+            for(i = 0;i < `COMMIT_CSR_CHANNEL_NUM;i++) begin
+                if(tdb_csrfile.get_uint16(DOMAIN_INPUT, "commit_csrf_read_addr", i) != 65535) begin
+                    `assert_equal(cur_cycle, tdb_csrfile.get_uint32(DOMAIN_OUTPUT, "csrf_commit_read_data", i), core_top_inst.commit_inst.csrf_commit_read_data[i])
+                end
+            end
+
+            `assert_equal(cur_cycle, tdb_csrfile.get_uint32(DOMAIN_OUTPUT, "csrf_all_mstatus_data", 0), core_top_inst.commit_inst.csrf_all_mstatus_data)
+
+            if(tdb_rob.get_uint8(DOMAIN_INPUT, "commit_rob_next_id", 0) != 255) begin
+                `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_next_id_valid", 0), core_top_inst.commit_inst.rob_commit_next_id_valid)
+            end
+
+            `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_flush_tail_id_valid", 0), core_top_inst.commit_inst.rob_commit_flush_tail_id_valid)
+
+            if(core_top_inst.commit_inst.rob_commit_flush_tail_id_valid) begin
+                `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_flush_tail_id", 0), core_top_inst.commit_inst.rob_commit_flush_tail_id)
+            end
+
+            for(i = 0;i < `WB_WIDTH;i++) begin
+                if(tdb_rob.get_uint8(DOMAIN_INPUT, "commit_rob_input_data_we", i)) begin
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.old_phy_reg_id_valid", i), core_top_inst.commit_inst.rob_commit_input_data[i].old_phy_reg_id_valid)
+
+                    if(core_top_inst.commit_inst.rob_commit_input_data[i].old_phy_reg_id_valid) begin
+                        `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.old_phy_reg_id", i), core_top_inst.commit_inst.rob_commit_input_data[i].old_phy_reg_id)
+                        `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.new_phy_reg_id", i), core_top_inst.commit_inst.rob_commit_input_data[i].new_phy_reg_id)
+                    end
+
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.finish", i), core_top_inst.commit_inst.rob_commit_input_data[i].finish)
+                    `assert_equal(cur_cycle, tdb_rob.get_uint32(DOMAIN_OUTPUT, "rob_commit_input_data.pc", i), core_top_inst.commit_inst.rob_commit_input_data[i].pc)
+                    `assert_equal(cur_cycle, tdb_rob.get_uint32(DOMAIN_OUTPUT, "rob_commit_input_data.inst_value", i), core_top_inst.commit_inst.rob_commit_input_data[i].inst_value)
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.has_exception", i), core_top_inst.commit_inst.rob_commit_input_data[i].has_exception)
+
+                    if(core_top_inst.commit_inst.rob_commit_input_data[i].has_exception) begin
+                        `assert_equal(cur_cycle, tdb_rob.get_uint32(DOMAIN_OUTPUT, "rob_commit_input_data.exception_id", i), core_top_inst.commit_inst.rob_commit_input_data[i].exception_id)
+                        `assert_equal(cur_cycle, tdb_rob.get_uint32(DOMAIN_OUTPUT, "rob_commit_input_data.exception_value", i), core_top_inst.commit_inst.rob_commit_input_data[i].exception_value)
+                    end
+
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.predicted", i), core_top_inst.commit_inst.rob_commit_input_data[i].predicted)
+
+                    if(core_top_inst.commit_inst.rob_commit_input_data[i].predicted) begin
+                        `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.predicted_jump", i), core_top_inst.commit_inst.rob_commit_input_data[i].predicted_jump)
+
+                        if(core_top_inst.commit_inst.rob_commit_input_data[i].predicted_jump) begin
+                            `assert_equal(cur_cycle, tdb_rob.get_uint32(DOMAIN_OUTPUT, "rob_commit_input_data.predicted_next_pc", i), core_top_inst.commit_inst.rob_commit_input_data[i].predicted_next_pc)
+                        end
+                    end
+                    
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.checkpoint_id_valid", i), core_top_inst.commit_inst.rob_commit_input_data[i].checkpoint_id_valid)
+
+                    if(core_top_inst.commit_inst.rob_commit_input_data[i].checkpoint_id_valid) begin
+                        `assert_equal(cur_cycle, tdb_rob.get_uint16(DOMAIN_OUTPUT, "rob_commit_input_data.checkpoint_id", i), core_top_inst.commit_inst.rob_commit_input_data[i].checkpoint_id)
+                    end
+
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.bru_op", i), core_top_inst.commit_inst.rob_commit_input_data[i].bru_op)
+
+                    if(core_top_inst.commit_inst.rob_commit_input_data[i].bru_op) begin
+                        `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.bru_jump", i), core_top_inst.commit_inst.rob_commit_input_data[i].bru_jump)
+
+                        if(core_top_inst.commit_inst.rob_commit_input_data[i].bru_jump) begin
+                            `assert_equal(cur_cycle, tdb_rob.get_uint32(DOMAIN_OUTPUT, "rob_commit_input_data.bru_next_pc", i), core_top_inst.commit_inst.rob_commit_input_data[i].bru_next_pc)
+                        end
+                    end
+
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.is_mret", i), core_top_inst.commit_inst.rob_commit_input_data[i].is_mret)
+                    `assert_equal(cur_cycle, tdb_rob.get_uint16(DOMAIN_OUTPUT, "rob_commit_input_data.csr_addr", i), core_top_inst.commit_inst.rob_commit_input_data[i].csr_addr)
+                    `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_input_data.csr_newvalue_valid", i), core_top_inst.commit_inst.rob_commit_input_data[i].csr_newvalue_valid)
+
+                    if(core_top_inst.commit_inst.rob_commit_input_data[i].csr_newvalue_valid) begin
+                        `assert_equal(cur_cycle, tdb_rob.get_uint32(DOMAIN_OUTPUT, "rob_commit_input_data.csr_newvalue", i), core_top_inst.commit_inst.rob_commit_input_data[i].csr_newvalue)
+                    end
+                end
+            end
+            
+            `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_retire_head_id_valid", 0), core_top_inst.commit_inst.rob_commit_retire_head_id_valid)
+
+            if (core_top_inst.commit_inst.rob_commit_retire_head_id_valid) begin
+                `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_retire_head_id", 0), core_top_inst.commit_inst.rob_commit_retire_head_id)
+            end
+
+            for(i = 0;i < `EXECUTE_UNIT_NUM;i++) begin
+                if(tdb_rob.get_uint8(DOMAIN_INPUT, "commit_rob_input_data_we", i)) begin
+                    `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.enable", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].enable)
+                    
+                    if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].enable) begin
+                        `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.value", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].value)
+                        `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.valid", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].valid)
+
+                        if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].valid) begin
+                            `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.imm", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].imm)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rs1", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs1)
+                            `assert_equal(cur_cycle, arg_src_t::_type'(tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.arg1_src", i)), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].arg1_src)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rs1_need_map", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs1_need_map)
+
+                            if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs1_need_map) begin
+                                `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rs1_phy", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs1_phy)
+                            end
+
+                            `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.src1_value", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].src1_value)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.src1_loaded", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].src1_loaded)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rs2", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs2)
+                            `assert_equal(cur_cycle, arg_src_t::_type'(tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.arg2_src", i)), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].arg2_src)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rs2_need_map", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs2_need_map)
+
+                            if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs2_need_map) begin
+                                `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rs2_phy", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rs2_phy)
+                            end
+
+                            `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.src2_value", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].src2_value)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.src2_loaded", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].src2_loaded)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rd", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rd)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rd_enable", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rd_enable)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.need_rename", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].need_rename)
+                            
+                            if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rd_enable && core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].need_rename) begin
+                                `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rd_phy", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rd_phy)
+                            end
+
+                            `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.rd_value", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rd_value)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint16(DOMAIN_INPUT, "wb_commit_port_data_out.csr", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].csr)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.csr_newvalue_valid", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].csr_newvalue_valid)
+
+                            if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].csr_newvalue_valid) begin
+                                 `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.csr_newvalue", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].csr_newvalue)
+                            end
+                        end
+
+                        `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.rob_id", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].rob_id)
+                        `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.pc", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].pc)
+                        `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.has_exception", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].has_exception)
+
+                        if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].has_exception) begin
+                            `assert_equal(cur_cycle, riscv_exception_t::_type'(tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.exception_id", i)), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].exception_id)
+                            `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.exception_value", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].exception_value)
+                        end
+                            
+                        `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.predicted", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].predicted)
+
+                        if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].predicted) begin
+                            `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.predicted_jump", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].predicted_jump)
+
+                            if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].predicted_jump) begin
+                                `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.predicted_next_pc", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].predicted_next_pc)
+                            end
+                        end
+                        
+                        `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.checkpoint_id_valid", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].checkpoint_id_valid)
+
+                        if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].checkpoint_id_valid) begin
+                            `assert_equal(cur_cycle, tdb_commit.get_uint16(DOMAIN_INPUT, "wb_commit_port_data_out.checkpoint_id", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].checkpoint_id)
+                        end
+
+                        `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.bru_jump", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].bru_jump)
+
+                        if(core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].bru_jump) begin
+                            `assert_equal(cur_cycle, tdb_commit.get_uint32(DOMAIN_INPUT, "wb_commit_port_data_out.bru_next_pc", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].bru_next_pc)
+                        end
+                        
+                        `assert_equal(cur_cycle, op_t::_type'(tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.op", i)), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].op)
+                        `assert_equal(cur_cycle, op_unit_t::_type'(tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.op_unit", i)), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].op_unit)
+                        `assert_equal(cur_cycle, tdb_commit.get_uint8(DOMAIN_INPUT, "wb_commit_port_data_out.sub_op", i), core_top_inst.commit_inst.wb_commit_port_data_out.op_info[i].sub_op.raw_data)
+                    end
+                end
+            end
+
+            `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_empty", 0), core_top_inst.commit_inst.rob_commit_empty)
+            `assert_equal(cur_cycle, tdb_rob.get_uint8(DOMAIN_OUTPUT, "rob_commit_full", 0), core_top_inst.commit_inst.rob_commit_full)
+
+            //output
+            if(core_top_inst.csrfile_inst.csr_write_enable[`CSR_CHARFIFO] && !(core_top_inst.csrfile_inst.csr_write_data[`CSR_CHARFIFO] & 'h80000000)) begin
+                $write("%c", core_top_inst.csrfile_inst.csr_write_data[`CSR_CHARFIFO]);
             end
 
             wait_clk();
@@ -1616,6 +2090,19 @@ module top;
         $display("TEST PASSED");
         $finish;
     end
+
+    `ifdef SIMULATOR_NOT_SUPPORT_SFORMATF_AS_CONSTANT_EXPRESSION
+        genvar bank_index;
+
+        generate
+            for(bank_index = 0;bank_index < `BUS_DATA_WIDTH / 8;bank_index++) begin
+                initial begin
+                    $readmemh({`SIM_IMAGE_NAME, $sformatf(".%0d", bank_index)}, core_top_inst.tcm_inst.fetch_mem_generate[bank_index].fetch_mem.mem_copy, 0, core_top_inst.tcm_inst.fetch_mem_generate[bank_index].fetch_mem.DEPTH - 1);
+                    $readmemh({`SIM_IMAGE_NAME, $sformatf(".%0d", bank_index)}, core_top_inst.tcm_inst.stbuf_mem_generate[bank_index].stbuf_mem.mem_copy, 0, core_top_inst.tcm_inst.stbuf_mem_generate[bank_index].stbuf_mem.DEPTH - 1);
+                end
+            end
+        endgenerate
+    `endif
 
     `ifdef FSDB_DUMP
         initial begin

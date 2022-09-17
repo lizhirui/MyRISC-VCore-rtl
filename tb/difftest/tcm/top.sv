@@ -126,6 +126,19 @@ module top;
         $finish;
     end
 
+    `ifdef SIMULATOR_NOT_SUPPORT_SFORMATF_AS_CONSTANT_EXPRESSION
+        genvar bank_index;
+
+        generate
+            for(bank_index = 0;bank_index < `BUS_DATA_WIDTH / 8;bank_index++) begin
+                initial begin
+                    $readmemh({`SIM_IMAGE_NAME, $sformatf(".%0d", bank_index)}, tcm_inst.fetch_mem_generate[bank_index].fetch_mem.mem_copy, 0, tcm_inst.fetch_mem_generate[bank_index].fetch_mem.DEPTH - 1);
+                    $readmemh({`SIM_IMAGE_NAME, $sformatf(".%0d", bank_index)}, tcm_inst.stbuf_mem_generate[bank_index].stbuf_mem.mem_copy, 0, tcm_inst.stbuf_mem_generate[bank_index].stbuf_mem.DEPTH - 1);
+                end
+            end
+        endgenerate
+    `endif
+
     `ifdef FSDB_DUMP
         initial begin
             $fsdbDumpfile("top.fsdb");
