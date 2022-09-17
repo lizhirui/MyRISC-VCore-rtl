@@ -210,6 +210,7 @@ module top;
 
             tdb.move_to_prev_row();
             `assert(tdb.read_cur_row())
+            cur_cycle = tdb.get_cur_row();
             wait_clk();
         end
     endtask

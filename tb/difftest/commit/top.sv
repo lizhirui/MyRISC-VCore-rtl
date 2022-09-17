@@ -464,6 +464,11 @@ module top;
 
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_csrf_we", 0), commit_csrf_we)
 
+            if(cur_cycle == 54321) begin
+                $display("cur_state = %0d, next_state = %0d, normal_feedback_pack.flush = %0d, flush_feedback_pack.flush = %0d, interrupt_flush_feedback_pack.flush = %0d", commit_inst.cur_state, commit_inst.next_state, commit_inst.normal_feedback_pack.flush, commit_inst.flush_feedback_pack.flush, commit_inst.interrupt_flush_feedback_pack.flush);
+                
+            end
+
             for(i = 0;i < `COMMIT_CSR_CHANNEL_NUM;i++) begin
                 if(commit_csrf_we[i]) begin
                     `assert_equal(cur_cycle, tdb.get_uint16(DOMAIN_OUTPUT, "commit_csrf_write_addr", i), commit_csrf_write_addr[i])
@@ -551,8 +556,15 @@ module top;
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.next_handle_rob_id_valid", 0), commit_feedback_pack.next_handle_rob_id_valid)
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.next_handle_rob_id", 0), commit_feedback_pack.next_handle_rob_id)
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.has_exception", 0), commit_feedback_pack.has_exception)
-            `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "commit_feedback_pack.exception_pc", 0), commit_feedback_pack.exception_pc)
-            `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.flush", 0), commit_feedback_pack.flush)
+
+            if(commit_feedback_pack.has_exception) begin
+                `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "commit_feedback_pack.exception_pc", 0), commit_feedback_pack.exception_pc)
+            end
+
+            if(commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.flush", 0), commit_feedback_pack.flush)
+            end
+            
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "commit_feedback_pack.committed_rob_id_valid", 0), commit_feedback_pack.committed_rob_id_valid)
 
             for(i = 0;i < `COMMIT_WIDTH;i++) begin

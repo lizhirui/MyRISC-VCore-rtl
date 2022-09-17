@@ -23,24 +23,66 @@ module clint(
     localparam logic[`ADDR_WIDTH - 1:0] MTIME_ADDR = 'hbff8;
 
     logic[`REG_DATA_WIDTH - 1:0] msip;
+    logic[`REG_DATA_WIDTH - 1:0] msip_next;
     logic[`REG_DATA_WIDTH * 2 - 1:0] mtimecmp;
+    logic[`REG_DATA_WIDTH * 2 - 1:0] mtimecmp_next;
     logic[`REG_DATA_WIDTH * 2 - 1:0] mtime;
+    logic[`REG_DATA_WIDTH * 2 - 1:0] mtime_next;
+    logic[`REG_DATA_WIDTH * 2 - 1:0] mtime_add_1;
+
+    always_comb begin
+        msip_next = msip;
+        mtimecmp_next = mtimecmp;
+
+        if(bus_clint_wr && (bus_clint_write_size == 'h4)) begin
+            if(bus_clint_write_addr == MSIP_ADDR) begin
+                msip_next = (bus_clint_data[0]) != 0;
+            end
+            else if(bus_clint_write_addr == MTIMECMP_ADDR) begin
+                mtimecmp_next = {mtimecmp[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH], bus_clint_data};
+            end
+            else if(bus_clint_write_addr == (MTIMECMP_ADDR + 'h4)) begin
+                mtimecmp_next = {bus_clint_data, mtimecmp[`REG_DATA_WIDTH - 1:0]};
+            end
+        end
+    end
 
     always_ff @(posedge clk) begin
         if(rst) begin
             msip <= 'b0;
             mtimecmp <= 'b0;
         end
-        else if(bus_clint_wr && (bus_clint_write_size == 'b10)) begin
+        else if(bus_clint_wr && (bus_clint_write_size == 'h4)) begin
             if(bus_clint_write_addr == MSIP_ADDR) begin
-                msip <= (bus_clint_data[0]) != 0;
+                msip <= msip_next;
             end
             else if(bus_clint_write_addr == MTIMECMP_ADDR) begin
-                mtimecmp <= {mtimecmp[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH], bus_clint_data};
+                mtimecmp <= mtimecmp_next;
             end
             else if(bus_clint_write_addr == (MTIMECMP_ADDR + 'h4)) begin
-                mtimecmp <= {bus_clint_data, mtimecmp[`REG_DATA_WIDTH - 1:0]};
+                mtimecmp <= mtimecmp_next;
             end
+        end
+    end
+
+    assign mtime_add_1 = mtime + 1;
+
+    always_comb begin
+        mtime_next = mtime;
+
+        if(bus_clint_wr && (bus_clint_write_size == 'h4)) begin 
+            if(bus_clint_write_addr == MTIME_ADDR) begin
+                mtime_next = {mtime_add_1[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH], bus_clint_data};
+            end
+            else if(bus_clint_write_addr == (MTIME_ADDR + 'h4)) begin
+                mtime_next = {bus_clint_data, mtime_add_1[`REG_DATA_WIDTH - 1:0]};
+            end
+            else begin
+                mtime_next = mtime_add_1;
+            end
+        end
+        else begin
+            mtime_next = mtime_add_1;
         end
     end
 
@@ -48,19 +90,8 @@ module clint(
         if(rst) begin
             mtime <= 'b0;
         end
-        else if(bus_clint_wr && (bus_clint_write_size == 'b10)) begin 
-            if(bus_clint_write_addr == MTIME_ADDR) begin
-                mtime <= {mtime[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH], bus_clint_data};
-            end
-            else if(bus_clint_write_addr == (MTIME_ADDR + 'h4)) begin
-                mtime <= {bus_clint_data, mtime[`REG_DATA_WIDTH - 1:0]};
-            end
-            else begin
-                mtime <= mtime + 'b1;
-            end
-        end
         else begin
-            mtime <= mtime + 'b1;
+            mtime <= mtime_next;
         end
     end
 
@@ -68,13 +99,13 @@ module clint(
         if(rst) begin
             clint_bus_data <= 'b0;
         end
-        else if(bus_clint_rd) begin
+        else if(bus_clint_rd && (bus_clint_read_size == 'h4)) begin
             case(bus_clint_read_addr)
-                MSIP_ADDR: clint_bus_data <= msip;
-                MTIMECMP_ADDR: clint_bus_data <= mtimecmp[`REG_DATA_WIDTH - 1:0];
-                (MTIMECMP_ADDR + 'h4): clint_bus_data <= mtimecmp[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
-                MTIME_ADDR: clint_bus_data <= mtime[`REG_DATA_WIDTH - 1:0];
-                (MTIME_ADDR + 'h4): clint_bus_data <= mtime[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
+                MSIP_ADDR: clint_bus_data <= msip_next;
+                MTIMECMP_ADDR: clint_bus_data <= mtimecmp_next[`REG_DATA_WIDTH - 1:0];
+                (MTIMECMP_ADDR + 'h4): clint_bus_data <= mtimecmp_next[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
+                MTIME_ADDR: clint_bus_data <= mtime_next[`REG_DATA_WIDTH - 1:0];
+                (MTIME_ADDR + 'h4): clint_bus_data <= mtime_next[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
                 default: clint_bus_data = 'b0;
             endcase
         end

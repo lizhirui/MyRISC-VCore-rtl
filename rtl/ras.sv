@@ -171,14 +171,16 @@ module ras #(
         end
     endgenerate
 
-    always_ff @(posedge clk) begin
+    /*always_ff @(posedge clk) begin
         if(rst) begin
             ras_csrf_ras_full_add <= 'b0;
         end
         else begin
             ras_csrf_ras_full_add <= need_throw;
         end
-    end
+    end*/
+
+    assign ras_csrf_ras_full_add = need_throw;
 
     assign ras_bp_addr = top_ptr > 0 ? buffer[top_ptr - 'b1] : buffer[0];
 endmodule

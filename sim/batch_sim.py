@@ -182,12 +182,12 @@ if args.group == "all":
 else:
     tb_groups.append(args.group)
 
-if args.group == "all":
+if args.simulator == "all":
     use_vcs = True
     use_xrun = True
-elif args.group == "vcs":
+elif args.simulator == "vcs":
     use_vcs = True
-elif args.group == "xrun":
+elif args.simulator == "xrun":
     use_xrun = True
 
 print("Start Time: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))

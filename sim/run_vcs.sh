@@ -43,6 +43,11 @@ endsw
 #    -line   \
 #    +vcsd   \
 
+#-negdelay \
+#+neg_tchk    \
+#+memcbk    \
+#+sdfverbose    \
+
 vcs -full64  \
     +vpi    \
     $fsdb_opts \
@@ -52,10 +57,6 @@ vcs -full64  \
     +error+10    \
     +v2k    \
     +ntb_exit_on_error=10 \
-    -negdelay \
-    +neg_tchk    \
-    +memcbk    \
-    +sdfverbose    \
     +define+$nc_def     \
     +define+SIMULATOR \
     +define+SIMULATOR_NOT_SUPPORT_SFORMATF_AS_CONSTANT_EXPRESSION \
@@ -68,6 +69,7 @@ vcs -full64  \
     $optconfig \
     $notiming \
     +warn=noWSUM \
+    -rad -debug_acc+pp \
     -sverilog \
     -l vcs.log \
     -f $flist  

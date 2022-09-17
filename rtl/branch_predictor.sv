@@ -322,7 +322,7 @@ module branch_predictor(
                               fetch_is_jal ? (fetch_bp_pc + sign_extend#(21)::_do(fetch_imm_j)) : 
                               fetch_is_jalr ? (fetch_is_call ? call_next_pc : fetch_is_normal_jump ? normal_next_pc : ras_bp_addr) : ras_bp_addr;
 
-    assign bp_fetch_valid = fetch_bp_valid;
+    assign bp_fetch_valid = fetch_bp_valid && (fetch_is_jal || fetch_is_jalr || fetch_is_branch);
     assign bp_fetch_global_history = gshare_global_history_feedback;
     assign bp_fetch_local_history = (local_bht_feedback_bru_valid && (local_bht_feedback_bru_p1 == local_get_pc_p1(fetch_bp_pc))) ? local_bht_feedback_bru :
                                     (local_bht_feedback_commit_valid && (local_bht_feedback_commit_p1 == local_get_pc_p1(fetch_bp_pc))) ? local_bht_feedback_commit :

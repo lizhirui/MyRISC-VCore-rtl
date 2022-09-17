@@ -160,7 +160,7 @@ module fetch(
                     end
                 end
                 else begin
-                    pc_next = cur_pc[jump_index];
+                    pc_next = cur_pc[jump_index] + 'd4;
                 end
             end
             else if(enable_index_valid) begin
@@ -202,13 +202,13 @@ module fetch(
     assign fetch_bus_addr = pc_next;
     assign fetch_bus_read_req = !jump_wait_next;
 
-    assign fetch_decode_fifo_push = bus_fetch_read_ack && !jump_wait && ~fetch_decode_fifo_flush;
+    assign fetch_decode_fifo_push = bus_fetch_read_ack && !jump_wait && !fetch_decode_fifo_flush;
 
     assign fetch_cpbuf_data.global_history = bp_fetch_global_history;
     assign fetch_cpbuf_data.local_history = bp_fetch_local_history;
     assign fetch_cpbuf_data.rat_phy_map_table_valid = 'b0;
     assign fetch_cpbuf_data.rat_phy_map_table_visible = 'b0;
-    assign fetch_cpbuf_push = jump_index_valid & fetch_decode_fifo_push;
+    assign fetch_cpbuf_push = jump_index_valid & bp_fetch_valid && fetch_decode_fifo_push;
 
     assign fetch_csrf_checkpoint_buffer_full_add = fetch_decode_fifo_push && jump_index_valid && bp_fetch_valid && !cpbuf_fetch_new_id_valid;
     assign fetch_csrf_fetch_not_full_add = fetch_decode_fifo_push && jump_index_valid;

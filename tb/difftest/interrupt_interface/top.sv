@@ -89,7 +89,6 @@ module top;
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "intif_all_int_software_ack", 0), intif_all_int_software_ack)
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "intif_all_int_timer_ack", 0), intif_all_int_timer_ack)
 
-            
             `assert_equal(cur_cycle, tdb.get_uint32(DOMAIN_OUTPUT, "intif_csrf_mip_data", 0), intif_csrf_mip_data)
             
             `assert_equal(cur_cycle, tdb.get_uint8(DOMAIN_OUTPUT, "intif_commit_has_interrupt", 0), intif_commit_has_interrupt)

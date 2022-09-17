@@ -163,7 +163,7 @@ module commit(
     endgenerate
 
     generate
-        assign commit_rob_retire_valid[0] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[0] && rob_commit_retire_data[0].finish;
+        assign commit_rob_retire_valid[0] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[0] && rob_commit_retire_data[0].finish && (next_state != STATE_INTERRUPT_FLUSH);
 
         for(i = 1;i < `COMMIT_WIDTH;i++) begin
             assign commit_rob_retire_valid[i] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[i] && 
@@ -350,7 +350,7 @@ module commit(
     endgenerate
 
     always_ff @(posedge clk) begin
-        if((cur_state == STATE_NORMAL) && retire_has_exception) begin
+        if((cur_state == STATE_NORMAL) && (next_state != STATE_NORMAL)) begin
             restore_rob_item_id <= rob_commit_flush_tail_id;
         end
         else if(cur_state != STATE_NORMAL) begin
@@ -432,7 +432,7 @@ module commit(
     endgenerate
 
     assign normal_feedback_pack.enable = !rob_commit_empty;
-    assign normal_feedback_pack.next_handle_rob_id_valid = (cur_state == STATE_NORMAL) && (rob_commit_next_id_valid || (!(|rob_item_is_finish) && !rob_commit_empty));
+    assign normal_feedback_pack.next_handle_rob_id_valid = (cur_state == STATE_NORMAL) && (((rob_commit_next_id_valid) && (|rob_item_is_finish)) || ((!rob_commit_empty) && ((next_state == STATE_INTERRUPT_FLUSH) || (!(|rob_item_is_finish)))));
     assign normal_feedback_pack.next_handle_rob_id = (|rob_item_is_finish) ? commit_rob_next_id : rob_commit_retire_head_id;
     assign normal_feedback_pack.has_exception = 'b0;
     assign normal_feedback_pack.exception_pc = 'b0;
