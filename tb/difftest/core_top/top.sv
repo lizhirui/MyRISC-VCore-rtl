@@ -671,7 +671,10 @@ module top;
             
             //fetch
             `assert_equal(cur_cycle, tdb_fetch.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.fetch_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_fetch.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.fetch_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.fetch_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_fetch.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.fetch_inst.commit_feedback_pack.flush)
+            end
 
             if(!core_top_inst.fetch_inst.commit_feedback_pack.enable || !core_top_inst.fetch_inst.commit_feedback_pack.flush) begin
                 `assert_equal(cur_cycle, tdb_fetch.get_uint8(DOMAIN_INPUT, "bp_fetch_valid", 0), core_top_inst.fetch_inst.bp_fetch_valid)
@@ -712,7 +715,11 @@ module top;
 
             //decode
             `assert_equal(cur_cycle, tdb_decode.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.decode_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_decode.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.decode_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.decode_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_decode.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.decode_inst.commit_feedback_pack.flush)
+            end
+
             `assert_equal(cur_cycle, tdb_decode.get_uint8(DOMAIN_INPUT, "fetch_decode_fifo_data_out_valid", 0), core_top_inst.decode_inst.fetch_decode_fifo_data_out_valid)
             `assert_equal(cur_cycle, tdb_decode.get_uint8(DOMAIN_INPUT, "decode_rename_fifo_data_in_enable", 0), core_top_inst.decode_inst.decode_rename_fifo_data_in_enable)
 
@@ -750,7 +757,10 @@ module top;
 
             //rename
             `assert_equal(cur_cycle, tdb_rename.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.rename_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_rename.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.rename_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.rename_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_rename.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.rename_inst.commit_feedback_pack.flush)
+            end
 
             for(i = 0;i < `RENAME_WIDTH;i++) begin
                 if(tdb_checkpoint_buffer.get_uint16(DOMAIN_INPUT, "rename_cpbuf_id", i) != 65535) begin
@@ -874,7 +884,10 @@ module top;
             end
 
             `assert_equal(cur_cycle, tdb_readreg.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.readreg_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_readreg.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.readreg_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.readreg_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_readreg.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.readreg_inst.commit_feedback_pack.flush)
+            end
 
             for(i = 0;i < `READREG_WIDTH;i++) begin
                 for(j = 0;j < 2;j++) begin
@@ -979,7 +992,11 @@ module top;
             end
 
             `assert_equal(cur_cycle, tdb_issue.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.issue_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_issue.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.issue_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.issue_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_issue.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.issue_inst.commit_feedback_pack.flush)
+            end
+
             `assert_equal(cur_cycle, tdb_issue.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.next_handle_rob_id_valid", 0), core_top_inst.issue_inst.commit_feedback_pack.next_handle_rob_id_valid)
 
             if(core_top_inst.issue_inst.commit_feedback_pack.next_handle_rob_id_valid) begin
@@ -1074,7 +1091,10 @@ module top;
 
             //execute_alu_0     
             `assert_equal(cur_cycle, tdb_execute_alu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_alu_generate[0].execute_alu_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_alu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_alu_generate[0].execute_alu_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_alu_generate[0].execute_alu_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_alu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_alu_generate[0].execute_alu_inst.commit_feedback_pack.flush)
+            end
 
             `assert_equal(cur_cycle, tdb_execute_alu[0].get_uint8(DOMAIN_INPUT, "issue_alu_fifo_data_out_valid", 0), core_top_inst.execute_alu_generate[0].execute_alu_inst.issue_alu_fifo_data_out_valid)
 
@@ -1151,7 +1171,10 @@ module top;
 
             //execute_alu_1
             `assert_equal(cur_cycle, tdb_execute_alu[1].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_alu_generate[1].execute_alu_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_alu[1].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_alu_generate[1].execute_alu_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_alu_generate[1].execute_alu_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_alu[1].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_alu_generate[1].execute_alu_inst.commit_feedback_pack.flush)
+            end
 
             `assert_equal(cur_cycle, tdb_execute_alu[1].get_uint8(DOMAIN_INPUT, "issue_alu_fifo_data_out_valid", 0), core_top_inst.execute_alu_generate[1].execute_alu_inst.issue_alu_fifo_data_out_valid)
 
@@ -1228,7 +1251,10 @@ module top;
 
             //execute_bru_0
             `assert_equal(cur_cycle, tdb_execute_bru[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_bru_generate[0].execute_bru_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_bru[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_bru_generate[0].execute_bru_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_bru_generate[0].execute_bru_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_bru[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_bru_generate[0].execute_bru_inst.commit_feedback_pack.flush)
+            end
 
             if(tdb_checkpoint_buffer.get_uint16(DOMAIN_INPUT, "exbru_cpbuf_id", 0) != 65535) begin
                 `assert_equal(cur_cycle, tdb_reader::get_vector#(`PHY_REG_NUM)::_do(tdb_checkpoint_buffer, DOMAIN_OUTPUT, "cpbuf_exbru_data.rat_phy_map_table_valid", 0), core_top_inst.execute_bru_generate[0].execute_bru_inst.cpbuf_exbru_data.rat_phy_map_table_valid)
@@ -1313,7 +1339,10 @@ module top;
 
             //execute_csr_0
             `assert_equal(cur_cycle, tdb_execute_csr[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_csr_generate[0].execute_csr_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_csr[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_csr_generate[0].execute_csr_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_csr_generate[0].execute_csr_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_csr[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_csr_generate[0].execute_csr_inst.commit_feedback_pack.flush)
+            end
 
             if(tdb_csrfile.get_uint16(DOMAIN_INPUT, "excsr_csrf_addr", 0) != 65535) begin
                 `assert_equal(cur_cycle, tdb_csrfile.get_uint32(DOMAIN_OUTPUT, "csrf_excsr_data", 0), core_top_inst.execute_csr_generate[0].execute_csr_inst.csrf_excsr_data)
@@ -1394,7 +1423,10 @@ module top;
 
             //execute_div_0     
             `assert_equal(cur_cycle, tdb_execute_div[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_div_generate[0].execute_div_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_div[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_div_generate[0].execute_div_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_div_generate[0].execute_div_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_div[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_div_generate[0].execute_div_inst.commit_feedback_pack.flush)
+            end
 
             `assert_equal(cur_cycle, tdb_execute_div[0].get_uint8(DOMAIN_INPUT, "issue_div_fifo_data_out_valid", 0), core_top_inst.execute_div_generate[0].execute_div_inst.issue_div_fifo_data_out_valid)
 
@@ -1471,7 +1503,10 @@ module top;
 
             //execute_lsu_0
             `assert_equal(cur_cycle, tdb_execute_lsu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_lsu_generate[0].execute_lsu_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_lsu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_lsu_generate[0].execute_lsu_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_lsu_generate[0].execute_lsu_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_lsu[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_lsu_generate[0].execute_lsu_inst.commit_feedback_pack.flush)
+            end
 
             `assert_equal(cur_cycle, tdb_store_buffer.get_uint8(DOMAIN_OUTPUT, "stbuf_exlsu_full", 0), core_top_inst.execute_lsu_generate[0].execute_lsu_inst.stbuf_exlsu_full)
 
@@ -1550,7 +1585,10 @@ module top;
 
             //execute_mul_0     
             `assert_equal(cur_cycle, tdb_execute_mul[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_mul_generate[0].execute_mul_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_mul[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_mul_generate[0].execute_mul_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_mul_generate[0].execute_mul_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_mul[0].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_mul_generate[0].execute_mul_inst.commit_feedback_pack.flush)
+            end
 
             `assert_equal(cur_cycle, tdb_execute_mul[0].get_uint8(DOMAIN_INPUT, "issue_mul_fifo_data_out_valid", 0), core_top_inst.execute_mul_generate[0].execute_mul_inst.issue_mul_fifo_data_out_valid)
 
@@ -1627,7 +1665,10 @@ module top;
 
             //execute_mul_1
             `assert_equal(cur_cycle, tdb_execute_mul[1].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.execute_mul_generate[1].execute_mul_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_execute_mul[1].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_mul_generate[1].execute_mul_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.execute_mul_generate[1].execute_mul_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_execute_mul[1].get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.execute_mul_generate[1].execute_mul_inst.commit_feedback_pack.flush)
+            end
 
             `assert_equal(cur_cycle, tdb_execute_mul[1].get_uint8(DOMAIN_INPUT, "issue_mul_fifo_data_out_valid", 0), core_top_inst.execute_mul_generate[1].execute_mul_inst.issue_mul_fifo_data_out_valid)
 
@@ -1704,7 +1745,10 @@ module top;
 
             //wb
             `assert_equal(cur_cycle, tdb_wb.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.enable", 0), core_top_inst.wb_inst.commit_feedback_pack.enable)
-            `assert_equal(cur_cycle, tdb_wb.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.wb_inst.commit_feedback_pack.flush)
+
+            if(core_top_inst.wb_inst.commit_feedback_pack.enable) begin
+                `assert_equal(cur_cycle, tdb_wb.get_uint8(DOMAIN_INPUT, "commit_feedback_pack.flush", 0), core_top_inst.wb_inst.commit_feedback_pack.flush)
+            end
 
             if(!core_top_inst.wb_inst.commit_feedback_pack.enable || !core_top_inst.wb_inst.commit_feedback_pack.flush) begin
                 for(i = 0;i < `ALU_UNIT_NUM;i++) begin
