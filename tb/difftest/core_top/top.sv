@@ -42,7 +42,8 @@ module top;
     logic rst;
 
     logic int_ext;
-    logic[`REG_DATA_WIDTH - 1:0] mepc_value;
+    logic rxd;
+    logic txd;
     
     integer i, j;
     integer unsigned temp;
@@ -242,6 +243,7 @@ module top;
         bus_last_stbuf_bus_read_req = 0;
         rst = 1;
         int_ext = 0;
+        rxd = 1;
         wait_clk();
         rst = 0;
         `assert(tdb_fetch.read_cur_row())

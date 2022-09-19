@@ -9,7 +9,9 @@ module core_top#(
         input logic rst,
 
         input logic int_ext,
-        output logic[`REG_DATA_WIDTH - 1:0] mepc_value
+        
+        input logic rxd,
+        output logic txd
     );
 
     //branch_predictor<->ras
@@ -80,6 +82,15 @@ module core_top#(
 
     //store_buffer<->all
     logic stbuf_all_empty;
+
+    //uart_controller<->csrfile
+    logic[7:0] uart_send_data;
+    logic uart_send;
+    logic uart_send_busy;
+
+    logic[7:0] uart_rev_data;
+    logic uart_rev_data_valid;
+    logic uart_rev_data_invalid;
 
     //fetch<->branch_predictor
     logic[`ADDR_WIDTH -1:0] fetch_bp_update_pc;
@@ -877,5 +888,16 @@ module core_top#(
     );
 
     assign all_intif_int_ext_req = int_ext;
-    assign mepc_value = csrf_all_mepc_data;
+
+    uart_controller #(
+        .FREQ_DIV(`SYS_FREQ / `UART_BAUD)
+    )uart_controller_inst(
+        .*,
+        .send_data(uart_send_data),
+        .send(uart_send),
+        .send_busy(uart_send_busy),
+        .rev_data(uart_rev_data),
+        .rev_data_valid(uart_rev_data_valid),
+        .rev_data_invalid(uart_rev_data_invalid)
+    );
 endmodule

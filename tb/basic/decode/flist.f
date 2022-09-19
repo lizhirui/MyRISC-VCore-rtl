@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/decode.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/decode.sv
++incdir+$SIM_ROOT_DIR/rtl

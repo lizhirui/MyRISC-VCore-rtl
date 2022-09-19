@@ -742,6 +742,7 @@
     `define CSR_MIP 'h344
     `define CSR_CHARFIFO 'h800
     `define CSR_FINISH 'h804
+    `define CSR_UARTFIFO 'h810
     `define CSR_MCYCLE 'hB00
     `define CSR_MINSTRET 'hB02
     `define CSR_MCYCLEH 'hB80

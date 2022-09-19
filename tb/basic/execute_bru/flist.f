@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/execute_bru.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/execute_bru.sv
++incdir+$SIM_ROOT_DIR/rtl

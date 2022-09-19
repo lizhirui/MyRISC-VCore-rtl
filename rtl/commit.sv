@@ -378,7 +378,9 @@ module commit(
     end
 
     always_comb begin
-        $cast(interrupt_id_temp, intif_commit_mcause_data);
+        if(!$cast(interrupt_id_temp, intif_commit_mcause_data)) begin
+            interrupt_id_temp = riscv_interrupt_t::user_software;
+        end
     end
 
     always_ff @(posedge clk) begin

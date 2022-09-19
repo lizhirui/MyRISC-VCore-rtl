@@ -43,6 +43,7 @@ syn/
 syn_simple/
 trace/
 trace_fast/
+tb_output/
 image/
 mount.sh
 umount.sh

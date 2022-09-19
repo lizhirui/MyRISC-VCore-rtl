@@ -1,6 +1,6 @@
 +incdir+$SIM_ROOT_DIR/tools/tdb_reader
 $SIM_ROOT_DIR/tools/tdb_reader/tdb_reader.a
 top.sv
-../../../rtl/csrfile.sv
-../../../rtl/data_selector.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/csrfile.sv
+$SIM_ROOT_DIR/rtl/data_selector.sv
++incdir+$SIM_ROOT_DIR/rtl

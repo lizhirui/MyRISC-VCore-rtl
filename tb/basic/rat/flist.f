@@ -1,4 +1,4 @@
 top.sv
-../../../rtl/rat.sv
-../../../rtl/parallel_finder.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/rat.sv
+$SIM_ROOT_DIR/rtl/parallel_finder.sv
++incdir+$SIM_ROOT_DIR/rtl

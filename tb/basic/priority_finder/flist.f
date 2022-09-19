@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/priority_finder.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/priority_finder.sv
++incdir+$SIM_ROOT_DIR/rtl

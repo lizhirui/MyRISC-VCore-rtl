@@ -1,5 +1,5 @@
 top.sv
-../../../rtl/checkpoint_buffer.sv
-../../../rtl/count_one.sv
-../../../rtl/data_selector.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/checkpoint_buffer.sv
+$SIM_ROOT_DIR/rtl/count_one.sv
+$SIM_ROOT_DIR/rtl/data_selector.sv
++incdir+$SIM_ROOT_DIR/rtl

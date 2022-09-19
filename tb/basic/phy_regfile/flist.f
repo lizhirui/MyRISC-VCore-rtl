@@ -1,5 +1,5 @@
 top.sv
-../../../rtl/phy_regfile.sv
-../../../rtl/parallel_finder.sv
-../../../rtl/data_selector.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/phy_regfile.sv
+$SIM_ROOT_DIR/rtl/parallel_finder.sv
+$SIM_ROOT_DIR/rtl/data_selector.sv
++incdir+$SIM_ROOT_DIR/rtl

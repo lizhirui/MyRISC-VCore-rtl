@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/handshake_dff.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/handshake_dff.sv
++incdir+$SIM_ROOT_DIR/rtl

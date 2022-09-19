@@ -51,7 +51,15 @@ module top;
     integer i;
     longint cur_cycle;
 
-    csrfile csrfile_inst(.*);
+    csrfile csrfile_inst(
+        .*,
+        .uart_send_data(),
+        .uart_send(),
+        .uart_send_busy(1'b0),
+        .uart_rev_data(8'b0),
+        .uart_rev_data_valid(1'b0),
+        .uart_rev_data_invalid()
+    );
     
     task wait_clk;
         @(posedge clk);

@@ -34,7 +34,15 @@ module csrfile(
         input logic commit_csrf_branch_hit_add,
         input logic commit_csrf_branch_miss_add,
         input logic[$clog2(`COMMIT_WIDTH):0] commit_csrf_commit_num_add,
-        input logic ras_csrf_ras_full_add
+        input logic ras_csrf_ras_full_add,
+
+        output logic[7:0] uart_send_data,
+        output logic uart_send,
+        input logic uart_send_busy,
+
+        input logic[7:0] uart_rev_data,
+        input logic uart_rev_data_valid,
+        output logic uart_rev_data_invalid
     );
 
     localparam CSR_NUM = 1 << `CSR_ADDR_WIDTH;
@@ -142,6 +150,7 @@ module csrfile(
                         `CSR_MIP,
                         `CSR_CHARFIFO: csr_file[i] <= 'b0;
                         `CSR_FINISH: csr_file[i] <= 'hffffffff;
+                        `CSR_UARTFIFO: csr_file[i] <= 'b0;
                         `CSR_MCYCLE,
                         `CSR_MINSTRET,
                         `CSR_MCYCLEH,
@@ -196,6 +205,7 @@ module csrfile(
                             `CSR_MIP: csr_file[i] <= intif_csrf_mip_data;
                             `CSR_CHARFIFO: csr_file[i] <= 'b0;
                             `CSR_FINISH: csr_file[i] <= csr_write_data[i];
+                            `CSR_UARTFIFO: csr_file[i] <= {uart_send ? 1'b1 : uart_send_busy, uart_rev_data_invalid ? 1'b0 : uart_rev_data_valid ? 1'b1 : csr_file[i][30], 22'b0, uart_rev_data_valid ? uart_rev_data : csr_file[i][7:0]};
                             `CSR_MCYCLE,
                             `CSR_MINSTRET,
                             `CSR_MCYCLEH,
@@ -249,6 +259,7 @@ module csrfile(
                             `CSR_MIP: csr_file[i] <= intif_csrf_mip_data;
                             `CSR_CHARFIFO,
                             `CSR_FINISH: csr_file[i] <= csr_file[i];
+                            `CSR_UARTFIFO: csr_file[i] <= {uart_send ? 1'b1 : uart_send_busy, uart_rev_data_valid ? 1'b1 : uart_rev_data_invalid ? 1'b0 : csr_file[i][30], 22'b0, uart_rev_data_valid ? uart_rev_data : csr_file[i][7:0]};
                             `CSR_MCYCLE: csr_file[i] = csr_mcycle_next[`REG_DATA_WIDTH - 1:0];
                             `CSR_MINSTRET: csr_file[i] <= csr_minstret_next[`REG_DATA_WIDTH - 1:0];
                             `CSR_MCYCLEH: csr_file[i] <= csr_mcycle_next[`REG_DATA_WIDTH * 2 - 1:`REG_DATA_WIDTH];
@@ -297,4 +308,8 @@ module csrfile(
     assign csrf_all_mstatus_data = csr_read_data[`CSR_MSTATUS];
     assign csrf_all_mip_data = csr_read_data[`CSR_MIP];
     assign csrf_all_mepc_data = csr_read_data[`CSR_MEPC];
+
+    assign uart_send_data = csr_write_data[`CSR_UARTFIFO][7:0];
+    assign uart_send = csr_write_enable[`CSR_UARTFIFO] && !csr_write_data[`CSR_UARTFIFO][31];
+    assign uart_rev_data_invalid = csr_write_enable[`CSR_UARTFIFO] && csr_write_data[`CSR_UARTFIFO][31];
 endmodule

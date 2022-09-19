@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/interrupt_interface.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/interrupt_interface.sv
++incdir+$SIM_ROOT_DIR/rtl

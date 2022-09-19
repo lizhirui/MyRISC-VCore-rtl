@@ -28,6 +28,9 @@ module csr_access_check #(
             `CSR_MIP,
             `CSR_CHARFIFO,
             `CSR_FINISH,
+            `ifndef SIMULATOR
+            `CSR_UARTFIFO,
+            `endif
             `CSR_MCYCLE,
             `CSR_MINSTRET,
             `CSR_MCYCLEH,

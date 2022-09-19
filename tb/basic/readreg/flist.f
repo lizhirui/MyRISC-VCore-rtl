@@ -1,4 +1,4 @@
 top.sv
-../../../rtl/readreg.sv
-../../../rtl/data_selector.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/readreg.sv
+$SIM_ROOT_DIR/rtl/data_selector.sv
++incdir+$SIM_ROOT_DIR/rtl

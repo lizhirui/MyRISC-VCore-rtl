@@ -6,19 +6,24 @@ setenv SIM_SCRIPT_DIR `pwd`
 
 if ($1 == "basic" || $1 == "test") then
     set module = $2
+    mkdir -p ../tb_output/$1/$module
+    cp -r ../tb/$1/$module/* ../tb_output/$1/$module/
+    cd ../tb_output/$1/$module/
 else if ($1 == "difftest") then
     setenv SIM_TRACE_NAME $2
     set module = $3
+    mkdir -p ../tb_output/$1/$2/$module
+    cp -r ../tb/$1/$module/* ../tb_output/$1/$2/$module/
+    cd ../tb_output/$1/$2/$module/
 else
     echo "Usage: run_vcs.sh <basic|difftest> [<trace_name>] <module>"
     exit 1
 endif
 
-cd ../tb/$1/$module/
 #set nc_def = "FSDB_DUMP"
 set nc_def = 'SIM_IMAGE_NAME="$SIM_ROOT_DIR/image/'$2'.hex"'
 set plusargs = "-noIncrComp"
-#set plusargs = +NULL
+set plusargs = +NULL
 set flist = "./flist.f" ;
 set fsdb_opts = '';
 set notiming = "+notimingcheck";

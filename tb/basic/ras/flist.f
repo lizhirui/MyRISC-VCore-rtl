@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/ras.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/ras.sv
++incdir+$SIM_ROOT_DIR/rtl

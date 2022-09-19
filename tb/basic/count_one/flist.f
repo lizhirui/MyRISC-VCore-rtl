@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/count_one.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/count_one.sv
++incdir+$SIM_ROOT_DIR/rtl

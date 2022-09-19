@@ -1,3 +1,3 @@
 top.sv
-../../../rtl/execute_feedback.sv
-+incdir+../../../rtl
+$SIM_ROOT_DIR/rtl/execute_feedback.sv
++incdir+$SIM_ROOT_DIR/rtl

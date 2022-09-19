@@ -1,6 +1,9 @@
 `ifndef __CONFIG_FILE_SVH__
 `define __CONFIG_FILE_SVH__
 
+    `define SYS_FREQ 10000000
+    `define UART_BAUD 9600
+
     `define FETCH_WIDTH 4
     `define DECODE_WIDTH 4
     `define RENAME_WIDTH 4
