@@ -163,7 +163,7 @@ module commit(
     endgenerate
 
     generate
-        assign commit_rob_retire_valid[0] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[0] && rob_commit_retire_data[0].finish && (next_state != STATE_INTERRUPT_FLUSH);
+        assign commit_rob_retire_valid[0] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[0] && rob_commit_retire_data[0].finish && !intif_commit_has_interrupt;
 
         for(i = 1;i < `COMMIT_WIDTH;i++) begin
             assign commit_rob_retire_valid[i] = (cur_state == STATE_NORMAL) && rob_commit_retire_id_valid[i] && 
@@ -378,9 +378,12 @@ module commit(
     end
 
     always_comb begin
-        if(!$cast(interrupt_id_temp, intif_commit_mcause_data)) begin
-            interrupt_id_temp = riscv_interrupt_t::user_software;
-        end
+        case(intif_commit_mcause_data)
+            riscv_interrupt_t::machine_software: interrupt_id_temp = riscv_interrupt_t::machine_software;
+            riscv_interrupt_t::machine_timer: interrupt_id_temp = riscv_interrupt_t::machine_timer;
+            riscv_interrupt_t::machine_external: interrupt_id_temp = riscv_interrupt_t::machine_external;
+            default: interrupt_id_temp = riscv_interrupt_t::machine_external;
+        endcase
     end
 
     always_ff @(posedge clk) begin

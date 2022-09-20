@@ -350,17 +350,20 @@ module top;
         rev_data_buf = 'b0;
         
         while(1) begin
-            @(posedge clk);
+            wait_clk();
 
             if(!txd) begin
                 `assert_equal('b1, uart_send_busy)
 
                 for(ri = 0;ri < 8;ri++) begin
-                    repeat(FREQ_DIV) begin @(posedge clk); `assert_equal('b1, uart_send_busy) end
+                    repeat(FREQ_DIV) begin wait_clk(); `assert_equal('b1, uart_send_busy) end
                     rev_data_buf[ri] = txd;
                 end
 
-                repeat(FREQ_DIV) begin `assert_equal('b1, uart_send_busy) @(posedge clk); end
+                repeat(FREQ_DIV) begin `assert_equal('b1, uart_send_busy) wait_clk(); end
+                `assert_equal('b1, txd)
+                `assert_equal('b1, uart_send_busy)
+                repeat(FREQ_DIV) wait_clk();
                 `assert_equal('b1, txd)
                 `assert_equal('b0, uart_send_busy)
             end

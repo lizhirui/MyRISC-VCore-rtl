@@ -31,6 +31,9 @@ module csr_access_check #(
             `ifndef SIMULATOR
             `CSR_UARTFIFO,
             `endif
+            `ifdef SIMULATOR_UARTFIFO
+            `CSR_UARTFIFO,
+            `endif
             `CSR_MCYCLE,
             `CSR_MINSTRET,
             `CSR_MCYCLEH,

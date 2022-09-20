@@ -155,7 +155,7 @@ module uart_controller #(
         end
     end
 
-    assign send_en = (send_clk_cnt == 'b0) && send_busy;
+    assign send_en = ((send_clk_cnt == (FREQ_DIV - 1)) && send_busy) || (send && !send_busy);
 
     always_ff @(posedge clk) begin
         if(rst) begin
@@ -203,16 +203,16 @@ module uart_controller #(
         end
         else if(send_en) begin
             case(send_cur_state)
-                'd1: txd <= 'b0;
-                'd2: txd <= send_data_buf[0];
-                'd3: txd <= send_data_buf[1];
-                'd4: txd <= send_data_buf[2];
-                'd5: txd <= send_data_buf[3];
-                'd6: txd <= send_data_buf[4];
-                'd7: txd <= send_data_buf[5];
-                'd8: txd <= send_data_buf[6];
-                'd9: txd <= send_data_buf[7];
-                'd10: txd <= 'b1;
+                'd0: txd <= 'b0;
+                'd1: txd <= send_data_buf[0];
+                'd2: txd <= send_data_buf[1];
+                'd3: txd <= send_data_buf[2];
+                'd4: txd <= send_data_buf[3];
+                'd5: txd <= send_data_buf[4];
+                'd6: txd <= send_data_buf[5];
+                'd7: txd <= send_data_buf[6];
+                'd8: txd <= send_data_buf[7];
+                'd9: txd <= 'b1;
             endcase
         end
     end
