@@ -2,7 +2,10 @@
 `define __CONFIG_FILE_SVH__
 
     `define SYS_FREQ 10000000
-    `define UART_BAUD 9600
+    `define UART_BAUD 115200
+    `define UART_FREQ_DIV ((`SYS_FREQ * 10 / `UART_BAUD + 5) / 10)
+    `define UART_SEND_FIFO_SIZE 256
+    `define UART_REV_FIFO_SIZE 256
 
     `define FETCH_WIDTH 4
     `define DECODE_WIDTH 4

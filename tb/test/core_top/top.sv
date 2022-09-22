@@ -12,13 +12,14 @@ module top;
     
     integer i, j;
     integer ri;
+    integer ti;
 
     logic[7:0] rev_data_buf;
 
-    localparam FREQ_DIV = `SYS_FREQ / `UART_BAUD;
+    localparam FREQ_DIV = `UART_FREQ_DIV;
 
     core_top #(
-        .IMAGE_PATH("../../../image/hello_world.hex"),
+        .IMAGE_PATH("../../../image/bootloader.hex"),
         .IMAGE_INIT(1)
     )core_top_inst(
         .*
@@ -31,6 +32,19 @@ module top;
 
     task eval;
         #0.1;
+    endtask
+
+    task task_send(logic[7:0] data);
+        rxd = 'b0;
+        repeat(FREQ_DIV) wait_clk();
+
+        for(ti = 0;ti < 8;ti++) begin
+            rxd = data[ti];
+            repeat(FREQ_DIV) wait_clk();
+        end
+
+        rxd = 'b1;
+        repeat(FREQ_DIV) wait_clk();
     endtask
 
     task test;
@@ -68,6 +82,13 @@ module top;
             end
         end
     end
+
+    /*initial begin
+        wait(rev_data_buf == "S");
+        task_send("A");
+        task_send("B");
+        task_send("C");
+    end*/
 
     initial begin
         clk = 0;

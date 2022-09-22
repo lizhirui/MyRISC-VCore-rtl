@@ -56,7 +56,7 @@ module top;
     integer ti;
     integer ri;
 
-    localparam FREQ_DIV = `SYS_FREQ / `UART_BAUD;
+    localparam FREQ_DIV = `UART_FREQ_DIV;
 
     csrfile csrfile_inst(.*);
 

@@ -68,6 +68,16 @@ module core_top#(
     //csrfile<->ras
     logic ras_csrf_ras_full_add;
 
+    //csrfile<->fifo_uart_send
+    logic[7:0] csrf_usendf_send_data;
+    logic csrf_usendf_send;
+    logic usendf_csrf_send_busy;
+
+    //csrfile<->fifo_uart_rev
+    logic[7:0] urevf_csrf_rev_data;
+    logic urevf_csrf_rev_data_valid;
+    logic csrf_urevf_rev_data_invalid;
+
     //execute_feedback_pack<->all
     execute_feedback_pack_t execute_feedback_pack;
 
@@ -83,14 +93,15 @@ module core_top#(
     //store_buffer<->all
     logic stbuf_all_empty;
 
-    //uart_controller<->csrfile
-    logic[7:0] uart_send_data;
-    logic uart_send;
-    logic uart_send_busy;
+    //uart_controller<->fifo_uart_send
+    logic[7:0] usendf_uart_send_data;
+    logic usendf_uart_send;
+    logic uart_usendf_send_busy;
 
-    logic[7:0] uart_rev_data;
-    logic uart_rev_data_valid;
-    logic uart_rev_data_invalid;
+    //uart_controller<->fifo_uart_rev
+    logic[7:0] uart_urevf_rev_data;
+    logic uart_urevf_rev_data_valid;
+    logic urevf_uart_rev_data_invalid;
 
     //fetch<->branch_predictor
     logic[`ADDR_WIDTH -1:0] fetch_bp_update_pc;
@@ -499,6 +510,8 @@ module core_top#(
     //commit<->all
     commit_feedback_pack_t commit_feedback_pack;
 
+    logic fifo_uart_rev_full;
+
     genvar i;
 
     fetch fetch_inst(.*);
@@ -612,7 +625,15 @@ module core_top#(
         .*
     );
 
-    csrfile csrfile_inst(.*);
+    csrfile csrfile_inst(
+        .*,
+        .uart_send_data(csrf_usendf_send_data),
+        .uart_send(csrf_usendf_send),
+        .uart_send_busy(usendf_csrf_send_busy),
+        .uart_rev_data(urevf_csrf_rev_data),
+        .uart_rev_data_valid(urevf_csrf_rev_data_valid),
+        .uart_rev_data_invalid(csrf_urevf_rev_data_invalid)
+    );
     execute_feedback execute_feedback_inst(.*);
     interrupt_interface interrupt_interface_inst(.*);
     phy_regfile phy_regfile_inst(.*);
@@ -890,14 +911,46 @@ module core_top#(
     assign all_intif_int_ext_req = int_ext;
 
     uart_controller #(
-        .FREQ_DIV(`SYS_FREQ / `UART_BAUD)
+        .FREQ_DIV(`UART_FREQ_DIV)
     )uart_controller_inst(
         .*,
-        .send_data(uart_send_data),
-        .send(uart_send),
-        .send_busy(uart_send_busy),
-        .rev_data(uart_rev_data),
-        .rev_data_valid(uart_rev_data_valid),
-        .rev_data_invalid(uart_rev_data_invalid)
+        .send_data(usendf_uart_send_data),
+        .send(usendf_uart_send),
+        .send_busy(uart_usendf_send_busy),
+        .rev_data(uart_urevf_rev_data),
+        .rev_data_valid(uart_urevf_rev_data_valid),
+        .rev_data_invalid(urevf_uart_rev_data_invalid)
     );
+
+    fifo #(
+        .WIDTH(8),
+        .DEPTH(`UART_SEND_FIFO_SIZE)
+    )fifo_uart_send_inst(
+        .*,
+        .data_in(csrf_usendf_send_data),
+        .push(csrf_usendf_send),
+        .full(usendf_csrf_send_busy),
+        .flush(1'b0),
+        .data_out(usendf_uart_send_data),
+        .data_out_valid(usendf_uart_send),
+        .pop(!uart_usendf_send_busy),
+        .empty()
+    );
+
+    fifo #(
+        .WIDTH(8),
+        .DEPTH(`UART_REV_FIFO_SIZE)
+    )fifo_uart_rev_inst(
+        .*,
+        .data_in(uart_urevf_rev_data),
+        .push(uart_urevf_rev_data_valid),
+        .full(fifo_uart_rev_full),
+        .flush(1'b0),
+        .data_out(urevf_csrf_rev_data),
+        .data_out_valid(urevf_csrf_rev_data_valid),
+        .pop(csrf_urevf_rev_data_invalid),
+        .empty()
+    );
+
+    assign urevf_uart_rev_data_invalid = !fifo_uart_rev_full && uart_urevf_rev_data_valid;
 endmodule

@@ -39,6 +39,7 @@ rtl/spyglass/
 rtl/work/
 fpga/
 fpga_test/
+fpga_image/
 syn/
 syn_simple/
 trace/
